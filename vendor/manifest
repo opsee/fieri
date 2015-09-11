@@ -1,0 +1,124 @@
+{
+	"version": 0,
+	"dependencies": [
+		{
+			"importpath": "github.com/aws/aws-sdk-go/aws",
+			"repository": "https://github.com/aws/aws-sdk-go",
+			"revision": "59b2dc566b52c3681974a0b98fb7c7d6ef70597f",
+			"branch": "master",
+			"path": "/aws"
+		},
+		{
+			"importpath": "github.com/aws/aws-sdk-go/internal/endpoints",
+			"repository": "https://github.com/aws/aws-sdk-go",
+			"revision": "59b2dc566b52c3681974a0b98fb7c7d6ef70597f",
+			"branch": "master",
+			"path": "/internal/endpoints"
+		},
+		{
+			"importpath": "github.com/aws/aws-sdk-go/internal/protocol/ec2query",
+			"repository": "https://github.com/aws/aws-sdk-go",
+			"revision": "59b2dc566b52c3681974a0b98fb7c7d6ef70597f",
+			"branch": "master",
+			"path": "/internal/protocol/ec2query"
+		},
+		{
+			"importpath": "github.com/aws/aws-sdk-go/internal/protocol/query",
+			"repository": "https://github.com/aws/aws-sdk-go",
+			"revision": "59b2dc566b52c3681974a0b98fb7c7d6ef70597f",
+			"branch": "master",
+			"path": "/internal/protocol/query"
+		},
+		{
+			"importpath": "github.com/aws/aws-sdk-go/internal/protocol/query/queryutil",
+			"repository": "https://github.com/aws/aws-sdk-go",
+			"revision": "59b2dc566b52c3681974a0b98fb7c7d6ef70597f",
+			"branch": "master",
+			"path": "/internal/protocol/query/queryutil"
+		},
+		{
+			"importpath": "github.com/aws/aws-sdk-go/internal/protocol/rest",
+			"repository": "https://github.com/aws/aws-sdk-go",
+			"revision": "59b2dc566b52c3681974a0b98fb7c7d6ef70597f",
+			"branch": "master",
+			"path": "/internal/protocol/rest"
+		},
+		{
+			"importpath": "github.com/aws/aws-sdk-go/internal/protocol/xml/xmlutil",
+			"repository": "https://github.com/aws/aws-sdk-go",
+			"revision": "59b2dc566b52c3681974a0b98fb7c7d6ef70597f",
+			"branch": "master",
+			"path": "/internal/protocol/xml/xmlutil"
+		},
+		{
+			"importpath": "github.com/aws/aws-sdk-go/internal/signer/v4",
+			"repository": "https://github.com/aws/aws-sdk-go",
+			"revision": "59b2dc566b52c3681974a0b98fb7c7d6ef70597f",
+			"branch": "master",
+			"path": "/internal/signer/v4"
+		},
+		{
+			"importpath": "github.com/aws/aws-sdk-go/service/ec2",
+			"repository": "https://github.com/aws/aws-sdk-go",
+			"revision": "59b2dc566b52c3681974a0b98fb7c7d6ef70597f",
+			"branch": "master",
+			"path": "/service/ec2"
+		},
+		{
+			"importpath": "github.com/aws/aws-sdk-go/service/elb",
+			"repository": "https://github.com/aws/aws-sdk-go",
+			"revision": "59b2dc566b52c3681974a0b98fb7c7d6ef70597f",
+			"branch": "master",
+			"path": "/service/elb"
+		},
+		{
+			"importpath": "github.com/aws/aws-sdk-go/service/rds",
+			"repository": "https://github.com/aws/aws-sdk-go",
+			"revision": "59b2dc566b52c3681974a0b98fb7c7d6ef70597f",
+			"branch": "master",
+			"path": "/service/rds"
+		},
+		{
+			"importpath": "github.com/jmoiron/sqlx",
+			"repository": "https://github.com/jmoiron/sqlx",
+			"revision": "3a92b1fd96032c4490fa618370fbf98ec69b680c",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/lib/pq",
+			"repository": "https://github.com/lib/pq",
+			"revision": "b269bd035a727d6c1081f76e7a239a1b00674c40",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/mreiferson/go-snappystream",
+			"repository": "https://github.com/mreiferson/go-snappystream",
+			"revision": "028eae7ab5c4c9e2d1cb4c4ca1e53259bbe7e504",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/nsqio/go-nsq",
+			"repository": "https://github.com/nsqio/go-nsq",
+			"revision": "383c07cb720e95787ddfc616fe8eb0136254e626",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/stretchr/objx",
+			"repository": "https://github.com/stretchr/objx",
+			"revision": "cbeaeb16a013161a98496fad62933b1d21786672",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/stretchr/testify",
+			"repository": "https://github.com/stretchr/testify",
+			"revision": "7c2b1e5640dcf2631213ca962d892bffa1e08860",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/vaughan0/go-ini",
+			"repository": "https://github.com/vaughan0/go-ini",
+			"revision": "a98ad7ee00ec53921f08832bc06ecf7fd600e6a1",
+			"branch": "master"
+		}
+	]
+}
