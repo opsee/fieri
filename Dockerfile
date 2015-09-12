@@ -3,6 +3,11 @@ FROM quay.io/opsee/vinz:latest
 ENV POSTGRES_CONN="postgres://postgres@postgresql/fieri_test?sslmode=disable"
 ENV LOOKUPD_HOSTS=""
 ENV NSQD_HOST=""
+ENV AWS_ACCESS_KEY_ID=""
+ENV AWS_SECRET_ACCESS_KEY=""
+ENV AWS_DEFAULT_REGION=""
+ENV AWS_INSTANCE_ID=""
+ENV AWS_SESSION_TOKEN=""
 
 RUN apk add --update bash ca-certificates curl
 RUN curl -Lo /opt/bin/migrate https://s3-us-west-2.amazonaws.com/opsee-releases/go/migrate/migrate-linux-amd64 && \
