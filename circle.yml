@@ -13,8 +13,7 @@ dependencies:
     - docker run --name postgresql -d -e PSQL_TRUST_LOCALNET=true -e DB_USER=postgres -e DB_PASS= -e DB_NAME=fieri_test sameersbn/postgresql:9.4-3 && sleep 10
 test:
   override:
-    - docker run -e POSTGRES_CONN="postgres://postgres@postgresql/fieri_test?sslmode=disable" --link postgresql:postgresql -e "TARGETS=linux/amd64"  -v `pwd`:/build quay.io/opsee/build-go
-    - docker build -t quay.io/opsee/fieri:latest .
+    - make docker
 deployment:
   production:
     branch: master
