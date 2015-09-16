@@ -1,20 +1,28 @@
 package store
 
 import (
+	"errors"
 	"time"
 )
 
 type Store interface {
 	PutInstance(*Instance) error
-	GetInstance(string, string) (*Instance, error)
-	ListInstances(string) ([]*Instance, error)
-	ListInstancesByType(string, string) ([]*Instance, error)
+	GetInstance(*Options) (*Instance, error)
+	ListInstances(*Options) ([]*Instance, error)
+	CountInstances(*Options) (int, error)
 	DeleteInstances() error
 	PutGroup(*Group) error
-	GetGroup(string, string) (*Group, error)
-	ListGroups(string) ([]*Group, error)
-	ListGroupsByType(string, string) ([]*Group, error)
+	GetGroup(*Options) (*Group, error)
+	ListGroups(*Options) ([]*Group, error)
+	CountGroups(*Options) (int, error)
 	DeleteGroups() error
+}
+
+type Options struct {
+	CustomerId string `json:"customer_id"`
+	InstanceId string `json:"instance_id"`
+	GroupId    string `json:"group_id"`
+	Type       string `json:"type"`
 }
 
 type Instance struct {
@@ -34,6 +42,12 @@ type Group struct {
 	CreatedAt  time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt  time.Time `json:"updated_at" db:"updated_at"`
 }
+
+var (
+	ErrMissingInstanceId = errors.New("must provide instance id")
+	ErrMissingGroupId    = errors.New("must provide group id")
+	ErrMissingCustomerId = errors.New("must provide customer id")
+)
 
 func NewInstance(id, customerId, instanceType string, data []byte) *Instance {
 	return &Instance{

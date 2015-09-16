@@ -59,7 +59,7 @@ func (suite *TestSuite) TestInstances() {
 		publishEvent(suite.Producer, "Instance", inst)
 	}
 	time.Sleep(50 * time.Millisecond)
-	instances, _ := suite.Store.ListInstancesByType(testCustomerId, "ec2")
+	instances, _ := suite.Store.ListInstances(&store.Options{CustomerId: testCustomerId, Type: "ec2"})
 	suite.Equal(len(instances), len(suite.Instances))
 }
 
@@ -68,7 +68,7 @@ func (suite *TestSuite) TestDbInstances() {
 		publishEvent(suite.Producer, "DBInstance", inst)
 	}
 	time.Sleep(50 * time.Millisecond)
-	instances, _ := suite.Store.ListInstancesByType(testCustomerId, "rds")
+	instances, _ := suite.Store.ListInstances(&store.Options{CustomerId: testCustomerId, Type: "rds"})
 	suite.Equal(len(suite.RdsInstances), len(instances))
 }
 
@@ -77,7 +77,7 @@ func (suite *TestSuite) TestSecurityGroups() {
 		publishEvent(suite.Producer, "SecurityGroup", group)
 	}
 	time.Sleep(50 * time.Millisecond)
-	groups, _ := suite.Store.ListGroupsByType(testCustomerId, "security")
+	groups, _ := suite.Store.ListGroups(&store.Options{CustomerId: testCustomerId, Type: "security"})
 	suite.Equal(len(suite.SecurityGroups), len(groups))
 }
 
@@ -86,7 +86,7 @@ func (suite *TestSuite) TestELBGroups() {
 		publishEvent(suite.Producer, "LoadBalancerDescription", group)
 	}
 	time.Sleep(50 * time.Millisecond)
-	groups, _ := suite.Store.ListGroupsByType(testCustomerId, "elb")
+	groups, _ := suite.Store.ListGroups(&store.Options{CustomerId: testCustomerId, Type: "elb"})
 	suite.Equal(len(suite.LoadBalancers), len(groups))
 }
 
@@ -95,7 +95,7 @@ func (suite *TestSuite) TestDbSecurityGroups() {
 		publishEvent(suite.Producer, "DBSecurityGroup", group)
 	}
 	time.Sleep(50 * time.Millisecond)
-	groups, _ := suite.Store.ListGroupsByType(testCustomerId, "rds-security")
+	groups, _ := suite.Store.ListGroups(&store.Options{CustomerId: testCustomerId, Type: "rds-security"})
 	suite.Equal(len(suite.RdsSecurityGroups), len(groups))
 }
 

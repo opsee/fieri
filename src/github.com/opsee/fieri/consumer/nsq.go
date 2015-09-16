@@ -3,9 +3,9 @@ package consumer
 import (
 	"encoding/json"
 	"fmt"
+	kvlog "github.com/go-kit/kit/log"
 	"github.com/nsqio/go-nsq"
 	"github.com/opsee/fieri/store"
-	"log"
 	"time"
 )
 
@@ -14,18 +14,22 @@ type Nsq struct {
 }
 
 type nsqHandler struct {
-	logger *log.Logger
+	logger kvlog.Logger
 	db     store.Store
 }
 
-func NewNsq(lookupds []string, db store.Store, logger *log.Logger, concurrency int, topic string) (Consumer, error) {
+func NewNsq(lookupds []string, db store.Store, kvlogger kvlog.Logger, concurrency int, topic string) (Consumer, error) {
 	config := nsq.NewConfig()
 	consumer, err := nsq.NewConsumer(topic, Channel, config)
 	if err != nil {
 		return nil, err
 	}
 
-	handler := &nsqHandler{logger: logger, db: db}
+	if kvlogger == nil {
+		kvlogger = kvlog.NewNopLogger()
+	}
+
+	handler := &nsqHandler{logger: kvlogger, db: db}
 	consumer.AddConcurrentHandlers(handler, concurrency)
 	consumer.ConnectToNSQLookupds(lookupds)
 
@@ -76,7 +80,12 @@ func (h *nsqHandler) handleInstance(event *Event, identifier, instanceType strin
 		return err
 	}
 
-	fmt.Printf("put instance: %s %s %s %s", id, event.CustomerId, instanceType, string(messageBody))
+	h.logger.Log("instance_id", id,
+		"customer_id", event.CustomerId,
+		"type", instanceType,
+		"body", string(messageBody),
+	)
+
 	instance := store.NewInstance(id, event.CustomerId, instanceType, messageBody)
 	return h.db.PutInstance(instance)
 }
@@ -87,7 +96,12 @@ func (h *nsqHandler) handleGroup(event *Event, identifier, groupType string) err
 		return err
 	}
 
-	fmt.Printf("put group: %s %s %s %s", id, event.CustomerId, groupType, string(messageBody))
+	h.logger.Log("group_id", id,
+		"customer_id", event.CustomerId,
+		"type", groupType,
+		"body", string(messageBody),
+	)
+
 	group := store.NewGroup(id, event.CustomerId, groupType, messageBody)
 	return h.db.PutGroup(group)
 }
@@ -107,10 +121,4 @@ func explodeMessageData(event *Event, identifier string) (string, []byte, error)
 	}
 
 	return id.(string), messageBody, nil
-}
-
-func (h *nsqHandler) log(msgs ...interface{}) {
-	if h.logger != nil {
-		h.logger.Println(msgs)
-	}
 }
