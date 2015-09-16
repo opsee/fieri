@@ -16,6 +16,7 @@ import (
 )
 
 const testCustomerId = "a8a20324-57db-11e5-88a1-37e8cfb78836"
+const testTopic = "discovery"
 
 type TestSuite struct {
 	suite.Suite
@@ -110,7 +111,7 @@ func publishEvent(producer *nsq.Producer, messageType string, message interface{
 		MessageBody: string(msg),
 	}
 	eventBytes, _ := json.Marshal(event)
-	producer.Publish(consumer.Topic, eventBytes)
+	producer.Publish(testTopic, eventBytes)
 }
 
 func setupConsumer(t *testing.T) (store.Store, consumer.Consumer) {
@@ -119,7 +120,7 @@ func setupConsumer(t *testing.T) (store.Store, consumer.Consumer) {
 		t.Fatal(err)
 	}
 
-	nsq, err := consumer.NewNsq(strings.Split(os.Getenv("LOOKUPD_HOSTS"), ","), db, nil)
+	nsq, err := consumer.NewNsq(strings.Split(os.Getenv("LOOKUPD_HOSTS"), ","), db, nil, 1, testTopic)
 	if err != nil {
 		t.Fatal(err)
 	}

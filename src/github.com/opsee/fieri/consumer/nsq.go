@@ -18,15 +18,15 @@ type nsqHandler struct {
 	db     store.Store
 }
 
-func NewNsq(lookupds []string, db store.Store, logger *log.Logger) (Consumer, error) {
+func NewNsq(lookupds []string, db store.Store, logger *log.Logger, concurrency int, topic string) (Consumer, error) {
 	config := nsq.NewConfig()
-	consumer, err := nsq.NewConsumer(Topic, Channel, config)
+	consumer, err := nsq.NewConsumer(topic, Channel, config)
 	if err != nil {
 		return nil, err
 	}
 
 	handler := &nsqHandler{logger: logger, db: db}
-	consumer.AddConcurrentHandlers(handler, 4)
+	consumer.AddConcurrentHandlers(handler, concurrency)
 	consumer.ConnectToNSQLookupds(lookupds)
 
 	return &Nsq{consumer: consumer}, nil
@@ -76,6 +76,7 @@ func (h *nsqHandler) handleInstance(event *Event, identifier, instanceType strin
 		return err
 	}
 
+	fmt.Printf("put instance: %s %s %s %s", id, event.CustomerId, instanceType, string(messageBody))
 	instance := store.NewInstance(id, event.CustomerId, instanceType, messageBody)
 	return h.db.PutInstance(instance)
 }
@@ -86,6 +87,7 @@ func (h *nsqHandler) handleGroup(event *Event, identifier, groupType string) err
 		return err
 	}
 
+	fmt.Printf("put group: %s %s %s %s", id, event.CustomerId, groupType, string(messageBody))
 	group := store.NewGroup(id, event.CustomerId, groupType, messageBody)
 	return h.db.PutGroup(group)
 }

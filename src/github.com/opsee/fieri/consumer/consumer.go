@@ -6,7 +6,6 @@ type Consumer interface {
 
 const (
 	Channel = "fieri"
-	Topic   = "discovery"
 )
 
 type Event struct {
