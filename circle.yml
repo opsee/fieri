@@ -13,7 +13,7 @@ dependencies:
     - docker pull nsqio/nsq
     - docker run --name postgresql -d -e PSQL_TRUST_LOCALNET=true -e DB_USER=postgres -e DB_PASS= -e DB_NAME=fieri_test sameersbn/postgresql:9.4-3
     - docker run --name lookupd -d nsqio/nsq /nsqlookupd
-    - docker run --name nsqd --link lookupd:lookupd -d nsqio/nsq /nsqd --broadcast-address=0.0.0.0 --lookupd-tcp-address=lookupd:4160
+    - docker run --name nsqd --link lookupd:lookupd -d nsqio/nsq /nsqd --broadcast-address=nsqd --lookupd-tcp-address=lookupd:4160
     - sleep 10
 test:
   override:
