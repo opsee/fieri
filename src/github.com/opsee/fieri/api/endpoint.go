@@ -27,6 +27,13 @@ var serverOptions = []httptransport.ServerOption{
 func Start(addr string, db store.Store, logger kvlog.Logger) error {
 	ctx := context.Background()
 
+	http.Handle("/health", httptransport.NewServer(
+		ctx,
+		loggingMiddleware(kvlog.NewContext(logger).With("path", "/health"))(makeHealthEndpoint(db)),
+		func(r *http.Request) (interface{}, error) { return nil, nil },
+		encodeResponse,
+		serverOptions...,
+	))
 	http.Handle("/instances", makeHandler(ctx, logger, "/instances", makeInstancesEndpoint(db)))
 	http.Handle("/groups", makeHandler(ctx, logger, "/groups", makeGroupsEndpoint(db)))
 	http.Handle("/instances/count", makeHandler(ctx, logger, "/instances/count", makeInstancesCountEndpoint(db)))
@@ -69,6 +76,13 @@ func decodeRequest(r *http.Request) (interface{}, error) {
 	}
 	return request, nil
 }
+
+func makeHealthEndpoint(db store.Store) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		return map[string]bool{"ok": true}, nil
+	}
+}
+
 func makeInstancesEndpoint(db store.Store) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(*store.Options)
