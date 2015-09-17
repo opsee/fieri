@@ -21,8 +21,8 @@ const testTopic = "discovery"
 type TestSuite struct {
 	suite.Suite
 	Store             store.Store
-	Consumer          consumer.Consumer
 	Producer          *nsq.Producer
+	Consumer          consumer.Consumer
 	Instances         []*ec2.Instance
 	SecurityGroups    []*ec2.SecurityGroup
 	LoadBalancers     []*elb.LoadBalancerDescription
@@ -33,9 +33,7 @@ type TestSuite struct {
 func (suite *TestSuite) SetupSuite() {
 	t := suite.T()
 
-	db, c := setupConsumer(t)
-	suite.Store = db
-	suite.Consumer = c
+	suite.Store = setupDb(t)
 	suite.Producer = setupProducer(t)
 	suite.Instances = loadInstances(t)
 	suite.SecurityGroups = loadSecurityGroups(t)
@@ -58,6 +56,7 @@ func (suite *TestSuite) TestInstances() {
 	for _, inst := range suite.Instances {
 		publishEvent(suite.Producer, "Instance", inst)
 	}
+	setupConsumer(suite)
 	time.Sleep(50 * time.Millisecond)
 	instances, _ := suite.Store.ListInstances(&store.Options{CustomerId: testCustomerId, Type: "ec2"})
 	suite.Equal(len(instances), len(suite.Instances))
@@ -67,6 +66,7 @@ func (suite *TestSuite) TestDbInstances() {
 	for _, inst := range suite.RdsInstances {
 		publishEvent(suite.Producer, "DBInstance", inst)
 	}
+	setupConsumer(suite)
 	time.Sleep(50 * time.Millisecond)
 	instances, _ := suite.Store.ListInstances(&store.Options{CustomerId: testCustomerId, Type: "rds"})
 	suite.Equal(len(suite.RdsInstances), len(instances))
@@ -76,6 +76,7 @@ func (suite *TestSuite) TestSecurityGroups() {
 	for _, group := range suite.SecurityGroups {
 		publishEvent(suite.Producer, "SecurityGroup", group)
 	}
+	setupConsumer(suite)
 	time.Sleep(50 * time.Millisecond)
 	groups, _ := suite.Store.ListGroups(&store.Options{CustomerId: testCustomerId, Type: "security"})
 	suite.Equal(len(suite.SecurityGroups), len(groups))
@@ -85,6 +86,7 @@ func (suite *TestSuite) TestELBGroups() {
 	for _, group := range suite.LoadBalancers {
 		publishEvent(suite.Producer, "LoadBalancerDescription", group)
 	}
+	setupConsumer(suite)
 	time.Sleep(50 * time.Millisecond)
 	groups, _ := suite.Store.ListGroups(&store.Options{CustomerId: testCustomerId, Type: "elb"})
 	suite.Equal(len(suite.LoadBalancers), len(groups))
@@ -94,6 +96,7 @@ func (suite *TestSuite) TestDbSecurityGroups() {
 	for _, group := range suite.RdsSecurityGroups {
 		publishEvent(suite.Producer, "DBSecurityGroup", group)
 	}
+	setupConsumer(suite)
 	time.Sleep(50 * time.Millisecond)
 	groups, _ := suite.Store.ListGroups(&store.Options{CustomerId: testCustomerId, Type: "rds-security"})
 	suite.Equal(len(suite.RdsSecurityGroups), len(groups))
@@ -114,18 +117,22 @@ func publishEvent(producer *nsq.Producer, messageType string, message interface{
 	producer.Publish(testTopic, eventBytes)
 }
 
-func setupConsumer(t *testing.T) (store.Store, consumer.Consumer) {
+func setupDb(t *testing.T) store.Store {
 	db, err := store.NewPostgres(os.Getenv("POSTGRES_CONN"))
 	if err != nil {
 		t.Fatal(err)
 	}
+	return db
+}
 
-	nsq, err := consumer.NewNsq(strings.Split(os.Getenv("LOOKUPD_HOSTS"), ","), db, nil, 1, testTopic)
-	if err != nil {
-		t.Fatal(err)
+func setupConsumer(suite *TestSuite) {
+	if suite.Consumer == nil {
+		nsq, err := consumer.NewNsq(strings.Split(os.Getenv("LOOKUPD_HOSTS"), ","), suite.Store, nil, 1, testTopic)
+		if err != nil {
+			suite.T().Fatal(err)
+		}
+		suite.Consumer = nsq
 	}
-
-	return db, nsq
 }
 
 func setupProducer(t *testing.T) *nsq.Producer {
