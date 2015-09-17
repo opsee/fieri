@@ -20,6 +20,10 @@ func NewPostgres(connection string) (Store, error) {
 	return &Postgres{db: db}, nil
 }
 
+func (pg *Postgres) PutEntity(entity interface{}) error {
+	return nil
+}
+
 func (pg *Postgres) PutInstance(instance *Instance) error {
 	query := "with update_instances as (update instances set (type, data) = (:type, :data) where id = :id and customer_id = :customer_id returning id), insert_instances as (insert into instances (id, customer_id, type, data) select :id as id, :customer_id as customer_id, :type as type, :data as data where not exists (select id from update_instances limit 1) returning id) select * from update_instances union all select * from insert_instances;"
 	_, err := pg.db.NamedExec(query, instance)
