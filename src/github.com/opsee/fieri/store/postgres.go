@@ -48,7 +48,7 @@ func (pg *Postgres) PutInstance(instance *Instance) error {
 			return err
 		}
 
-		_, err = pg.db.Exec("insert into groups_instances (customer_id, group_name, instance_id) select $1 as customer_id, $2 as group_name, $3 as instance_id where not exists (select 1 from groups_instances where customer_id = $4 and group_name = $5 and instance_id = $6)", group.CustomerId, group.Name, instance.Id, group.CustomerId, group.Name, instance.Id)
+		_, err = pg.db.Exec("insert into groups_instances (customer_id, group_name, instance_id) select $1 as customer_id, $2 as group_name, $3 as instance_id where not exists (select 1 from groups_instances where customer_id = $1 and group_name = $2 and instance_id = $3)", group.CustomerId, group.Name, instance.Id)
 		if err != nil {
 			return err
 		}
@@ -126,7 +126,7 @@ func (pg *Postgres) PutGroup(group *Group) error {
 			return err
 		}
 
-		_, err = pg.db.Exec("insert into groups_instances (customer_id, group_name, instance_id) select $1 as customer_id, $2 as group_name, $3 as instance_id where not exists (select 1 from groups_instances where customer_id = $4 and group_name = $5 and instance_id = $6)", group.CustomerId, group.Name, instance.Id, group.CustomerId, group.Name, instance.Id)
+		_, err = pg.db.Exec("insert into groups_instances (customer_id, group_name, instance_id) select $1 as customer_id, $2 as group_name, $3 as instance_id where not exists (select 1 from groups_instances where customer_id = $1 and group_name = $2 and instance_id = $3)", group.CustomerId, group.Name, instance.Id)
 		if err != nil {
 			return err
 		}
