@@ -5,6 +5,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/elb"
 	"github.com/aws/aws-sdk-go/service/rds"
+	kvlog "github.com/go-kit/kit/log"
 	"github.com/nsqio/go-nsq"
 	"github.com/opsee/fieri/consumer"
 	"github.com/opsee/fieri/store"
@@ -41,14 +42,14 @@ func (suite *TestSuite) SetupSuite() {
 	suite.RdsInstances = loadRdsInstances(t)
 	suite.RdsSecurityGroups = loadRdsSecurityGroups(t)
 
-	suite.Store.DeleteInstances()
-	suite.Store.DeleteGroups()
+	// suite.Store.DeleteInstances()
+	// suite.Store.DeleteGroups()
 }
 
 func (suite *TestSuite) TearDownSuite() {
-	time.Sleep(50 * time.Millisecond)
+	time.Sleep(500 * time.Millisecond)
 	suite.Producer.Stop()
-	time.Sleep(50 * time.Millisecond)
+	time.Sleep(500 * time.Millisecond)
 	suite.Consumer.Stop()
 }
 
@@ -57,9 +58,9 @@ func (suite *TestSuite) TestInstances() {
 		publishEvent(suite.Producer, "Instance", inst)
 	}
 	setupConsumer(suite)
-	time.Sleep(50 * time.Millisecond)
+	time.Sleep(500 * time.Millisecond)
 	instances, _ := suite.Store.ListInstances(&store.Options{CustomerId: testCustomerId, Type: "ec2"})
-	suite.Equal(len(instances), len(suite.Instances))
+	suite.Equal(len(suite.Instances), len(instances))
 }
 
 func (suite *TestSuite) TestDbInstances() {
@@ -67,7 +68,7 @@ func (suite *TestSuite) TestDbInstances() {
 		publishEvent(suite.Producer, "DBInstance", inst)
 	}
 	setupConsumer(suite)
-	time.Sleep(50 * time.Millisecond)
+	time.Sleep(500 * time.Millisecond)
 	instances, _ := suite.Store.ListInstances(&store.Options{CustomerId: testCustomerId, Type: "rds"})
 	suite.Equal(len(suite.RdsInstances), len(instances))
 }
@@ -77,7 +78,7 @@ func (suite *TestSuite) TestSecurityGroups() {
 		publishEvent(suite.Producer, "SecurityGroup", group)
 	}
 	setupConsumer(suite)
-	time.Sleep(50 * time.Millisecond)
+	time.Sleep(500 * time.Millisecond)
 	groups, _ := suite.Store.ListGroups(&store.Options{CustomerId: testCustomerId, Type: "security"})
 	suite.Equal(len(suite.SecurityGroups), len(groups))
 }
@@ -87,7 +88,7 @@ func (suite *TestSuite) TestELBGroups() {
 		publishEvent(suite.Producer, "LoadBalancerDescription", group)
 	}
 	setupConsumer(suite)
-	time.Sleep(50 * time.Millisecond)
+	time.Sleep(500 * time.Millisecond)
 	groups, _ := suite.Store.ListGroups(&store.Options{CustomerId: testCustomerId, Type: "elb"})
 	suite.Equal(len(suite.LoadBalancers), len(groups))
 }
@@ -97,7 +98,7 @@ func (suite *TestSuite) TestDbSecurityGroups() {
 		publishEvent(suite.Producer, "DBSecurityGroup", group)
 	}
 	setupConsumer(suite)
-	time.Sleep(50 * time.Millisecond)
+	time.Sleep(500 * time.Millisecond)
 	groups, _ := suite.Store.ListGroups(&store.Options{CustomerId: testCustomerId, Type: "rds-security"})
 	suite.Equal(len(suite.RdsSecurityGroups), len(groups))
 }
@@ -127,7 +128,7 @@ func setupDb(t *testing.T) store.Store {
 
 func setupConsumer(suite *TestSuite) {
 	if suite.Consumer == nil {
-		nsq, err := consumer.NewNsq(strings.Split(os.Getenv("LOOKUPD_HOSTS"), ","), suite.Store, nil, 1, testTopic)
+		nsq, err := consumer.NewNsq(strings.Split(os.Getenv("LOOKUPD_HOSTS"), ","), suite.Store, kvlog.NewLogfmtLogger(os.Stdout), 1, testTopic)
 		if err != nil {
 			suite.T().Fatal(err)
 		}
@@ -215,9 +216,11 @@ func loadInstances(t *testing.T) []*ec2.Instance {
 	}
 
 	// flatmap the instances
-	instances := make([]*ec2.Instance, len(*instancesJson.Reservations))
-	for i, r := range *instancesJson.Reservations {
-		instances[i] = r.Instances[0]
+	instances := make([]*ec2.Instance, 0)
+	for _, r := range *instancesJson.Reservations {
+		for _, i := range r.Instances {
+			instances = append(instances, i)
+		}
 	}
 
 	return instances
