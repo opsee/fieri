@@ -28,21 +28,21 @@ type Options struct {
 }
 
 type Instance struct {
-	Id         string      `json:"id"`
-	CustomerId string      `json:"customer_id" db:"customer_id"`
-	Type       string      `json:"type"`
-	Data       interface{} `json:"data"`
-	Groups     []*Group    `json:"groups" db:""`
-	CreatedAt  time.Time   `json:"created_at" db:"created_at"`
-	UpdatedAt  time.Time   `json:"updated_at" db:"updated_at"`
+	Id         string    `json:"id"`
+	CustomerId string    `json:"customer_id" db:"customer_id"`
+	Type       string    `json:"type"`
+	Data       []byte    `json:"data"`
+	Groups     []*Group  `json:"-" db:""`
+	CreatedAt  time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at" db:"updated_at"`
 }
 
 type Group struct {
 	Name       string      `json:"name"`
 	CustomerId string      `json:"customer_id" db:"customer_id"`
 	Type       string      `json:"type"`
-	Data       interface{} `json:"data"`
-	Instances  []*Instance `json:"instances" db:""`
+	Data       []byte      `json:"data"`
+	Instances  []*Instance `json:"-" db:""`
 	CreatedAt  time.Time   `json:"created_at" db:"created_at"`
 	UpdatedAt  time.Time   `json:"updated_at" db:"updated_at"`
 }
@@ -215,6 +215,7 @@ func NewInstance(customerId string, instanceData interface{}) *Instance {
 	var (
 		instance *Instance
 		groups   []*Group
+		jsonD    []byte
 	)
 
 	switch instanceData.(type) {
@@ -233,12 +234,13 @@ func NewInstance(customerId string, instanceData interface{}) *Instance {
 			groups[i] = NewGroup(customerId, gd)
 		}
 
+		jsonD, _ = json.Marshal(iData)
 		instance = &Instance{
 			Id:         iData.InstanceId,
 			CustomerId: customerId,
 			Type:       InstanceStoreType,
 			Groups:     groups,
-			Data:       iData,
+			Data:       jsonD,
 		}
 
 	case *DBInstanceData:
@@ -262,12 +264,13 @@ func NewInstance(customerId string, instanceData interface{}) *Instance {
 			groups[i+dbSecLen] = NewGroup(customerId, sg)
 		}
 
+		jsonD, _ = json.Marshal(dbiData)
 		instance = &Instance{
 			Id:         dbiData.DBInstanceIdentifier,
 			CustomerId: customerId,
 			Type:       DBInstanceStoreType,
 			Groups:     groups,
-			Data:       dbiData,
+			Data:       jsonD,
 		}
 	}
 
@@ -275,25 +278,30 @@ func NewInstance(customerId string, instanceData interface{}) *Instance {
 }
 
 func NewGroup(customerId string, groupData interface{}) *Group {
-	var group *Group
+	var (
+		group *Group
+		jsonD []byte
+	)
 
 	switch groupData.(type) {
 	case *SecurityGroupData:
 		sg := groupData.(*SecurityGroupData)
+		jsonD, _ = json.Marshal(sg)
 		group = &Group{
 			CustomerId: customerId,
 			Name:       sg.GroupId,
 			Type:       SecurityGroupStoreType,
-			Data:       sg,
+			Data:       jsonD,
 		}
 
 	case *DBSecurityGroupData:
 		dbsg := groupData.(*DBSecurityGroupData)
+		jsonD, _ = json.Marshal(dbsg)
 		group = &Group{
 			CustomerId: customerId,
 			Name:       dbsg.DBSecurityGroupName,
 			Type:       DBSecurityGroupStoreType,
-			Data:       dbsg,
+			Data:       jsonD,
 		}
 
 	case *ELBData:
@@ -306,11 +314,12 @@ func NewGroup(customerId string, groupData interface{}) *Group {
 			}
 			instances[i] = NewInstance(customerId, dat)
 		}
+		jsonD, _ = json.Marshal(elb)
 		group = &Group{
 			CustomerId: customerId,
 			Name:       elb.LoadBalancerName,
 			Type:       ELBStoreType,
-			Data:       elb,
+			Data:       jsonD,
 			Instances:  instances,
 		}
 	}

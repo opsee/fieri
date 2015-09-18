@@ -5,6 +5,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/elb"
 	"github.com/aws/aws-sdk-go/service/rds"
+	kvlog "github.com/go-kit/kit/log"
 	"github.com/nsqio/go-nsq"
 	"github.com/opsee/fieri/consumer"
 	"github.com/opsee/fieri/store"
@@ -59,7 +60,7 @@ func (suite *TestSuite) TestInstances() {
 	setupConsumer(suite)
 	time.Sleep(50 * time.Millisecond)
 	instances, _ := suite.Store.ListInstances(&store.Options{CustomerId: testCustomerId, Type: "ec2"})
-	suite.Equal(len(instances), len(suite.Instances))
+	suite.Equal(len(suite.Instances), len(instances))
 }
 
 func (suite *TestSuite) TestDbInstances() {
@@ -127,7 +128,7 @@ func setupDb(t *testing.T) store.Store {
 
 func setupConsumer(suite *TestSuite) {
 	if suite.Consumer == nil {
-		nsq, err := consumer.NewNsq(strings.Split(os.Getenv("LOOKUPD_HOSTS"), ","), suite.Store, nil, 1, testTopic)
+		nsq, err := consumer.NewNsq(strings.Split(os.Getenv("LOOKUPD_HOSTS"), ","), suite.Store, kvlog.NewLogfmtLogger(os.Stdout), 1, testTopic)
 		if err != nil {
 			suite.T().Fatal(err)
 		}
@@ -215,9 +216,11 @@ func loadInstances(t *testing.T) []*ec2.Instance {
 	}
 
 	// flatmap the instances
-	instances := make([]*ec2.Instance, len(*instancesJson.Reservations))
-	for i, r := range *instancesJson.Reservations {
-		instances[i] = r.Instances[0]
+	instances := make([]*ec2.Instance, 0)
+	for _, r := range *instancesJson.Reservations {
+		for _, i := range r.Instances {
+			instances = append(instances, i)
+		}
 	}
 
 	return instances

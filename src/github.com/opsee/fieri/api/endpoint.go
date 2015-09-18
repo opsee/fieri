@@ -92,7 +92,12 @@ func makeInstancesEndpoint(db store.Store) endpoint.Endpoint {
 			return nil, err
 		}
 
-		return instances, nil
+		instanceData := make([]interface{}, len(instances))
+		for i, inst := range instances {
+			instanceData[i] = inst.Data
+		}
+
+		return instanceData, nil
 	}
 }
 
@@ -105,7 +110,12 @@ func makeGroupsEndpoint(db store.Store) endpoint.Endpoint {
 			return nil, err
 		}
 
-		return groups, nil
+		groupData := make([]interface{}, len(groups))
+		for i, group := range groups {
+			groupData[i] = group.Data
+		}
+
+		return groupData, nil
 	}
 }
 
