@@ -80,11 +80,7 @@ func (pg *Postgres) ListInstances(options *Options) ([]*Instance, error) {
 	instances := make([]*Instance, 0)
 
 	if options.GroupId != "" {
-		if options.Type == "" {
-			err = pg.db.Select(&instances, "select * from instances where id in (select instance_id from groups_instances where customer_id = $1 and group_name = $2)", options.CustomerId, options.GroupId)
-		} else {
-			err = pg.db.Select(&instances, "select * from instances where id in (select instance_id from groups_instances where customer_id = $1 and group_name = $2) and type = $3", options.CustomerId, options.GroupId, options.Type)
-		}
+		err = pg.db.Select(&instances, "select * from instances where id in (select instance_id from groups_instances where customer_id = $1 and group_name = $2)", options.CustomerId, options.GroupId)
 	} else if options.Type == "" {
 		err = pg.db.Select(&instances, "select * from instances where customer_id = $1", options.CustomerId)
 	} else {
