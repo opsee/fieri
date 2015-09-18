@@ -87,12 +87,11 @@ func makeInstancesEndpoint(db store.Store) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(*store.Options)
 
-		instances, err := db.ListInstances(req)
-		if err != nil {
-			return nil, err
+		if req.InstanceId != "" {
+			return db.GetInstance(req)
+		} else {
+			return db.ListInstances(req)
 		}
-
-		return instances, nil
 	}
 }
 
