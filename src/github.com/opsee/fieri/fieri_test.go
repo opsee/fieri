@@ -42,8 +42,8 @@ func (suite *TestSuite) SetupSuite() {
 	suite.RdsInstances = loadRdsInstances(t)
 	suite.RdsSecurityGroups = loadRdsSecurityGroups(t)
 
-	suite.Store.DeleteInstances()
-	suite.Store.DeleteGroups()
+	// suite.Store.DeleteInstances()
+	// suite.Store.DeleteGroups()
 }
 
 func (suite *TestSuite) TearDownSuite() {

@@ -326,3 +326,11 @@ func NewGroup(customerId string, groupData interface{}) *Group {
 
 	return group
 }
+
+func (i *Instance) MarshalJSON() ([]byte, error) {
+	return i.Data, nil
+}
+
+func (g *Group) MarshalJSON() ([]byte, error) {
+	return g.Data, nil
+}
