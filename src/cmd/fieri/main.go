@@ -51,7 +51,7 @@ func main() {
 	if addr == "" {
 		log.Fatal("You have to give me a listening address by setting the FIERI_API_ADDR env var")
 	}
-	api.Start(addr, db, kvlogger)
+	api.StartHTTP(addr, db, kvlogger)
 
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, os.Kill)
