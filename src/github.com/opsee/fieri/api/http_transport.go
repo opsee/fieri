@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	requestTimeout = 60 * time.Second
+	forwardTimeout = 5 * time.Second
 )
 
 var (
@@ -28,6 +28,12 @@ type panicFunc func(rw http.ResponseWriter, r *http.Request, data interface{})
 
 type MessageResponse struct {
 	Message string `json:"message"`
+}
+
+type requestForwarder struct {
+	response interface{}
+	status   int
+	err      error
 }
 
 func StartHTTP(addr string, svc store.Store, logger log.Logger) {
@@ -50,7 +56,7 @@ func StartHTTP(addr string, svc store.Store, logger log.Logger) {
 
 func wrapHandler(ctx context.Context, logger log.Logger, svc store.Store, decoder decodeFunc, handler handlerFunc) httprouter.Handle {
 	return func(rw http.ResponseWriter, r *http.Request, params httprouter.Params) {
-		ctx, cancel := context.WithTimeout(ctx, requestTimeout)
+		ctx, cancel := context.WithTimeout(ctx, forwardTimeout)
 		defer cancel()
 
 		req, err := decoder(r, params)
@@ -59,20 +65,34 @@ func wrapHandler(ctx context.Context, logger log.Logger, svc store.Store, decode
 			return
 		}
 
-		response, status, err := handler(ctx, req, svc)
-		if err != nil {
-			renderServerError(rw, logger, err)
-			return
-		}
+		forwardChan := make(chan requestForwarder)
+		go func() {
+			defer close(forwardChan)
+			response, status, err := handler(ctx, req, svc)
+			forwardChan <- requestForwarder{response, status, err}
+		}()
 
-		encodedResponse, err := encodeResponse(response)
-		if err != nil {
-			renderServerError(rw, logger, err)
-			return
-		}
+		select {
+		case rf := <-forwardChan:
+			if rf.err != nil {
+				renderServerError(rw, logger, rf.err)
+				return
+			}
 
-		rw.WriteHeader(status)
-		rw.Write(encodedResponse)
+			encodedResponse, err := encodeResponse(rf.response)
+			if err != nil {
+				renderServerError(rw, logger, err)
+				return
+			}
+
+			rw.WriteHeader(rf.status)
+			rw.Write(encodedResponse)
+
+		case <-ctx.Done():
+			msg, _ := encodeResponse(MessageResponse{"Backend service unavailable."})
+			rw.WriteHeader(http.StatusServiceUnavailable)
+			rw.Write(msg)
+		}
 	}
 }
 
@@ -149,15 +169,10 @@ func okHandler(ctx context.Context, request interface{}, svc store.Store) (inter
 }
 
 func instancesHandler(ctx context.Context, request interface{}, svc store.Store) (interface{}, int, error) {
-	storeChan := make(chan *store.InstanceResponse)
-	go func() {
-		response, err := svc.ListInstances(request.(*store.InstancesRequest))
-		if err != nil {
-			return nil, 0, err
-		}
-	}()
-
-	
+	response, err := svc.ListInstances(request.(*store.InstancesRequest))
+	if err != nil {
+		return nil, 0, err
+	}
 
 	return response, http.StatusOK, nil
 }
