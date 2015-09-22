@@ -59,8 +59,8 @@ func (suite *TestSuite) TestInstances() {
 	}
 	setupConsumer(suite)
 	time.Sleep(500 * time.Millisecond)
-	instances, _ := suite.Store.ListInstances(&store.Options{CustomerId: testCustomerId, Type: "ec2"})
-	suite.Equal(len(suite.Instances), len(instances))
+	instances, _ := suite.Store.ListInstances(&store.InstancesRequest{CustomerId: testCustomerId, Type: "ec2"})
+	suite.Equal(len(suite.Instances), len(instances.Instances))
 }
 
 func (suite *TestSuite) TestDbInstances() {
@@ -69,8 +69,8 @@ func (suite *TestSuite) TestDbInstances() {
 	}
 	setupConsumer(suite)
 	time.Sleep(500 * time.Millisecond)
-	instances, _ := suite.Store.ListInstances(&store.Options{CustomerId: testCustomerId, Type: "rds"})
-	suite.Equal(len(suite.RdsInstances), len(instances))
+	instances, _ := suite.Store.ListInstances(&store.InstancesRequest{CustomerId: testCustomerId, Type: "rds"})
+	suite.Equal(len(suite.RdsInstances), len(instances.Instances))
 }
 
 func (suite *TestSuite) TestSecurityGroups() {
@@ -79,8 +79,8 @@ func (suite *TestSuite) TestSecurityGroups() {
 	}
 	setupConsumer(suite)
 	time.Sleep(500 * time.Millisecond)
-	groups, _ := suite.Store.ListGroups(&store.Options{CustomerId: testCustomerId, Type: "security"})
-	suite.Equal(len(suite.SecurityGroups), len(groups))
+	groups, _ := suite.Store.ListGroups(&store.GroupsRequest{CustomerId: testCustomerId, Type: "security"})
+	suite.Equal(len(suite.SecurityGroups), len(groups.Groups))
 }
 
 func (suite *TestSuite) TestELBGroups() {
@@ -89,8 +89,8 @@ func (suite *TestSuite) TestELBGroups() {
 	}
 	setupConsumer(suite)
 	time.Sleep(500 * time.Millisecond)
-	groups, _ := suite.Store.ListGroups(&store.Options{CustomerId: testCustomerId, Type: "elb"})
-	suite.Equal(len(suite.LoadBalancers), len(groups))
+	groups, _ := suite.Store.ListGroups(&store.GroupsRequest{CustomerId: testCustomerId, Type: "elb"})
+	suite.Equal(len(suite.LoadBalancers), len(groups.Groups))
 }
 
 func (suite *TestSuite) TestDbSecurityGroups() {
@@ -99,8 +99,8 @@ func (suite *TestSuite) TestDbSecurityGroups() {
 	}
 	setupConsumer(suite)
 	time.Sleep(500 * time.Millisecond)
-	groups, _ := suite.Store.ListGroups(&store.Options{CustomerId: testCustomerId, Type: "rds-security"})
-	suite.Equal(len(suite.RdsSecurityGroups), len(groups))
+	groups, _ := suite.Store.ListGroups(&store.GroupsRequest{CustomerId: testCustomerId, Type: "rds-security"})
+	suite.Equal(len(suite.RdsSecurityGroups), len(groups.Groups))
 }
 
 func TestTestSuite(t *testing.T) {
@@ -112,7 +112,7 @@ func publishEvent(producer *nsq.Producer, messageType string, message interface{
 	event := &consumer.Event{
 		CustomerId:  testCustomerId,
 		MessageType: messageType,
-		MessageBody: string(msg),
+		MessageBody: msg,
 	}
 	eventBytes, _ := json.Marshal(event)
 	producer.Publish(testTopic, eventBytes)

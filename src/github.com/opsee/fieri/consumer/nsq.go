@@ -63,5 +63,6 @@ func (h *nsqHandler) HandleMessage(m *nsq.Message) error {
 		return err
 	}
 
-	return h.db.PutEntity(entity)
+	_, err = h.db.PutEntity(entity)
+	return err
 }

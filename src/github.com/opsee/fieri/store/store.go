@@ -1,31 +1,67 @@
 package store
 
 import (
-	"golang.org/x/net/context"
 	"encoding/json"
 	"errors"
 	"time"
 )
 
 type Store interface {
-	PutEntity(interface{}) error
-	PutInstance(*Instance) error
-	GetInstance(*Options) (*Instance, error)
-	ListInstances(*Options) ([]*Instance, error)
-	CountInstances(*Options) (int, error)
-	DeleteInstances() error
-	PutGroup(*Group) error
-	GetGroup(*Options) (*Group, error)
-	ListGroups(*Options) ([]*Group, error)
-	CountGroups(*Options) (int, error)
-	DeleteGroups() error
+	PutEntity(interface{}) (*EntityResponse, error)
+	GetInstance(*InstanceRequest) (*InstanceResponse, error)
+	ListInstances(*InstancesRequest) (*InstancesResponse, error)
+	CountInstances(*InstancesRequest) (*CountResponse, error)
+	GetGroup(*GroupRequest) (*GroupResponse, error)
+	ListGroups(*GroupsRequest) (*GroupsResponse, error)
+	CountGroups(*GroupsRequest) (*CountResponse, error)
 }
 
-type Options struct {
+type InstanceRequest struct {
 	CustomerId string `json:"customer_id"`
 	InstanceId string `json:"instance_id"`
+	Type       string `json:"type"`
+}
+
+type InstancesRequest struct {
+	CustomerId string `json:"customer_id"`
 	GroupId    string `json:"group_id"`
 	Type       string `json:"type"`
+}
+
+type GroupRequest struct {
+	CustomerId string `json:"customer_id"`
+	GroupId    string `json:"group_id"`
+	Type       string `json:"type"`
+}
+
+type GroupsRequest struct {
+	CustomerId string `json:"customer_id"`
+	Type       string `json:"type"`
+}
+
+type InstanceResponse struct {
+	Instance *Instance `json:"instance"`
+}
+
+type InstancesResponse struct {
+	Instances []*Instance `json:"instances"`
+}
+
+type GroupResponse struct {
+	Group     *Group      `json:"group"`
+	Instances []*Instance `json:"instances"`
+}
+
+type GroupsResponse struct {
+	Groups []*Group `json:"group"`
+}
+
+type EntityResponse struct {
+	Type string `json:"type"`
+}
+
+type CountResponse struct {
+	Count int `json:"count"`
 }
 
 type Instance struct {
@@ -144,9 +180,11 @@ var (
 	ErrMissingInstanceId = errors.New("must provide instance id")
 	ErrMissingGroupId    = errors.New("must provide group id")
 	ErrMissingCustomerId = errors.New("must provide customer id")
+	ErrMissingType       = errors.New("must provide type")
+	ErrMissingBody       = errors.New("must provide body")
 )
 
-func NewEntity(entityType, customerId, blob string) (interface{}, error) {
+func NewEntity(entityType, customerId string, blob []byte) (interface{}, error) {
 	var (
 		err    error
 		entity interface{}
@@ -155,7 +193,7 @@ func NewEntity(entityType, customerId, blob string) (interface{}, error) {
 	switch entityType {
 	case InstanceEntityType:
 		instanceData := &InstanceData{}
-		if err = json.Unmarshal([]byte(blob), instanceData); err != nil {
+		if err = json.Unmarshal(blob, instanceData); err != nil {
 			break
 		}
 		if instanceData.InstanceId == "" {
@@ -166,7 +204,7 @@ func NewEntity(entityType, customerId, blob string) (interface{}, error) {
 
 	case DBInstanceEntityType:
 		dbInstanceData := &DBInstanceData{}
-		if err = json.Unmarshal([]byte(blob), dbInstanceData); err != nil {
+		if err = json.Unmarshal(blob, dbInstanceData); err != nil {
 			break
 		}
 		if dbInstanceData.DBInstanceIdentifier == "" {
@@ -177,7 +215,7 @@ func NewEntity(entityType, customerId, blob string) (interface{}, error) {
 
 	case SecurityGroupEntityType:
 		secGroupData := &SecurityGroupData{}
-		if err = json.Unmarshal([]byte(blob), secGroupData); err != nil {
+		if err = json.Unmarshal(blob, secGroupData); err != nil {
 			break
 		}
 		if secGroupData.GroupId == "" {
@@ -188,7 +226,7 @@ func NewEntity(entityType, customerId, blob string) (interface{}, error) {
 
 	case DBSecurityGroupEntityType:
 		dbSecGroupData := &DBSecurityGroupData{}
-		if err = json.Unmarshal([]byte(blob), dbSecGroupData); err != nil {
+		if err = json.Unmarshal(blob, dbSecGroupData); err != nil {
 			break
 		}
 		if dbSecGroupData.DBSecurityGroupName == "" {
@@ -199,7 +237,7 @@ func NewEntity(entityType, customerId, blob string) (interface{}, error) {
 
 	case ELBEntityType:
 		elbData := &ELBData{}
-		if err = json.Unmarshal([]byte(blob), elbData); err != nil {
+		if err = json.Unmarshal(blob, elbData); err != nil {
 			break
 		}
 		if elbData.LoadBalancerName == "" {

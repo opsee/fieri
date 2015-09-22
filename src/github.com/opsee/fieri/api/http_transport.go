@@ -1,73 +1,73 @@
 package api
 
 import (
-	"net/http"
-	"golang.org/x/net/context"
-	"github.com/julienschmidt/httprouter"
+	"encoding/json"
+	"errors"
+	"fmt"
 	"github.com/go-kit/kit/log"
+	"github.com/julienschmidt/httprouter"
 	"github.com/opsee/fieri/store"
-)
-
-const (
-	resourceKey = iota
-	idKey
-	customerIdKey
-	typeKey
+	"golang.org/x/net/context"
+	"io/ioutil"
+	"net/http"
+	"time"
 )
 
 const (
 	requestTimeout = 60 * time.Second
-	errorInternalServerError = []byte(`{"message": "an unexpected error happened!"}`)
 )
 
 var (
-	origins       = []string{
-		"http://localhost:8080",
-		"https://staging.opsy.co",
-		"https://app.opsee.com",
-	}
+	errMissingCustomerId    = errors.New("missing customer id header (Customer-Id).")
+	errMalformedRequestBody = errors.New("malformed request body.")
 )
 
-type handlerFunc func(ctx context.Context) (interface{}, int, error)
+type handlerFunc func(ctx context.Context, request interface{}, svc store.Store) (interface{}, int, error)
+type decodeFunc func(r *http.Request, p httprouter.Params) (interface{}, error)
+type panicFunc func(rw http.ResponseWriter, r *http.Request, data interface{})
 
-func StartHTTP(addr string, db store.Store, logger log.Logger) {
+type MessageResponse struct {
+	Message string `json:"message"`
+}
+
+func StartHTTP(addr string, svc store.Store, logger log.Logger) {
 	ctx := context.Background()
-	appHandler := makeHandler(ctx, logger, db, resourceHandler)
 
 	router := httprouter.New()
 	router.HandleMethodNotAllowed = true
 	router.PanicHandler = makePanicHandler(logger)
-	router.GET("/:resource", appHandler)
-	router.GET("/:resource/:type", appHandler)
-	router.GET("/:resource/:type/:id", appHandler)
-
-	// idunno yet
-	router.POST("/entity", ----)
+	router.OPTIONS("/*any", wrapHandler(ctx, logger, svc, decodeIdentity, okHandler))
+	router.GET("/health", wrapHandler(ctx, logger, svc, decodeIdentity, okHandler))
+	router.GET("/instances", wrapHandler(ctx, logger, svc, decodeInstanceRequest, instancesHandler))
+	router.GET("/instances/:type", wrapHandler(ctx, logger, svc, decodeInstancesRequest, instancesHandler))
+	router.GET("/instance/:type/:id", wrapHandler(ctx, logger, svc, decodeInstancesRequest, instanceHandler))
+	router.GET("/groups", wrapHandler(ctx, logger, svc, decodeGroupRequest, groupsHandler))
+	router.GET("/groups/:type", wrapHandler(ctx, logger, svc, decodeGroupsRequest, groupsHandler))
+	router.GET("/group/:type/:id", wrapHandler(ctx, logger, svc, decodeGroupsRequest, groupHandler))
+	router.POST("/:type", wrapHandler(ctx, logger, svc, decodeEntityRequest, entityHandler))
 	http.ListenAndServe(addr, router)
 }
 
-func makeHandler(ctx context.Context, handler handlerFunc) httprouter.Handle {
+func wrapHandler(ctx context.Context, logger log.Logger, svc store.Store, decoder decodeFunc, handler handlerFunc) httprouter.Handle {
 	return func(rw http.ResponseWriter, r *http.Request, params httprouter.Params) {
 		ctx, cancel := context.WithTimeout(ctx, requestTimeout)
 		defer cancel()
 
-		customerHeader := r.Header.Get("Customer-Id")
-		ctx = context.WithValue(ctx, customerIdKey, customerHeader)
-		ctx = context.WithValue(ctx, resourceKey, params.ByName("resource"))
-		ctx = context.WithValue(ctx, idKey, params.ByName("id"))
-		ctx = context.WithValue(ctx, typeKey, params.ByName("type"))
-
-		response, status, err := handlerFunc(ctx)
+		req, err := decoder(r, params)
 		if err != nil {
-			rw.WriteHeader(http.StatusInternalServerError)
-			rw.Write(errorInternalServerError)
+			renderBadRequest(rw, logger, err)
+			return
+		}
+
+		response, status, err := handler(ctx, req, svc)
+		if err != nil {
+			renderServerError(rw, logger, err)
 			return
 		}
 
 		encodedResponse, err := encodeResponse(response)
 		if err != nil {
-			rw.WriteHeader(http.StatusInternalServerError)
-			rw.Write(errorInternalServerError)
+			renderServerError(rw, logger, err)
 			return
 		}
 
@@ -76,71 +76,146 @@ func makeHandler(ctx context.Context, handler handlerFunc) httprouter.Handle {
 	}
 }
 
-func resourceHandler(ctx context.Context) (interface{}, int, error) {
-	var (
-		response interface{}
-		err error
-		status = http.StatusOK
-	)
+func decodeIdentity(r *http.Request, params httprouter.Params) (interface{}, error) {
+	return struct{}{}, nil
+}
 
-	opts := &store.Options{
-		CustomerId: ctx.Value(customerIdKey).(string),
-		Type: ctx.Value(typeKey).(string),
+func decodeInstanceRequest(r *http.Request, params httprouter.Params) (interface{}, error) {
+	customerId := r.Header.Get("Customer-Id")
+	if customerId == "" {
+		return nil, errMissingCustomerId
 	}
 
-	if opts.CustomerId == "" {
-		return badRequestHandler(ctx)
+	return &store.InstanceRequest{
+		CustomerId: customerId,
+		InstanceId: params.ByName("id"),
+		Type:       params.ByName("type"),
+	}, nil
+}
+
+func decodeInstancesRequest(r *http.Request, params httprouter.Params) (interface{}, error) {
+	customerId := r.Header.Get("Customer-Id")
+	if customerId == "" {
+		return nil, errMissingCustomerId
 	}
 
-	switch ctx.Value(resourceKey) {
-	case "instances":
-		instances, err = store.ListInstances(opts)
-		response = ListInstancesResponse{instances}
+	return &store.InstancesRequest{
+		CustomerId: customerId,
+		Type:       params.ByName("type"),
+	}, nil
+}
 
-	case "groups":
-		groups, err = store.ListGroups(opts)
-		response = ListGroupsResponse{groups}
+func decodeGroupRequest(r *http.Request, params httprouter.Params) (interface{}, error) {
+	customerId := r.Header.Get("Customer-Id")
+	if customerId == "" {
+		return nil, errMissingCustomerId
+	}
 
-	case "instance":
-		opts.InstanceId = ctx.Value(idKey).(string)
-		if opts.InstanceId == "" {
-			return badRequestHandler(ctx)
+	return &store.GroupRequest{
+		CustomerId: customerId,
+		GroupId:    params.ByName("id"),
+		Type:       params.ByName("type"),
+	}, nil
+}
+
+func decodeGroupsRequest(r *http.Request, params httprouter.Params) (interface{}, error) {
+	customerId := r.Header.Get("Customer-Id")
+	if customerId == "" {
+		return nil, errMissingCustomerId
+	}
+
+	return &store.GroupsRequest{
+		CustomerId: customerId,
+		Type:       params.ByName("type"),
+	}, nil
+}
+
+func decodeEntityRequest(r *http.Request, params httprouter.Params) (interface{}, error) {
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	entity, err := store.NewEntity(params.ByName("type"), r.Header.Get("Customer-Id"), body)
+	if err != nil {
+		return nil, errMalformedRequestBody
+	}
+
+	return entity, nil
+}
+
+func okHandler(ctx context.Context, request interface{}, svc store.Store) (interface{}, int, error) {
+	return map[string]bool{"ok": true}, http.StatusOK, nil
+}
+
+func instancesHandler(ctx context.Context, request interface{}, svc store.Store) (interface{}, int, error) {
+	storeChan := make(chan *store.InstanceResponse)
+	go func() {
+		response, err := svc.ListInstances(request.(*store.InstancesRequest))
+		if err != nil {
+			return nil, 0, err
 		}
+	}()
 
-		instance, err = store.GetInstance(opts)
-		response = GetInstanceResponse{instance}
+	
 
-	case "group":
-		opts.GroupId = ctx.Value(idKey).(string)
-		if opts.GroupId == "" {
-			return badRequestHandler(ctx)
-		}
+	return response, http.StatusOK, nil
+}
 
-		group, _ := store.GetGroup(opts)
-		instances, err := store.ListInstances(opts)
-		response = GetGroupResponse{group, instances}
-
-	default:
-		return notFoundHandler(ctx)
+func instanceHandler(ctx context.Context, request interface{}, svc store.Store) (interface{}, int, error) {
+	response, err := svc.GetInstance(request.(*store.InstanceRequest))
+	if err != nil {
+		return nil, 0, err
 	}
 
-	return response, status, err
+	return response, http.StatusOK, nil
 }
 
-func notFoundHandler(ctx context.Context) (interface{}, int, error) {
-	return MessageResponse{"not found"}, http.StatusNotFound, nil
+func groupsHandler(ctx context.Context, request interface{}, svc store.Store) (interface{}, int, error) {
+	response, err := svc.ListGroups(request.(*store.GroupsRequest))
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return response, http.StatusOK, nil
 }
 
-func badRequestHandler(ctx context.Context) (interface{}, int, error) {
-	return MessageResponse{"bad request"}, http.StatusBadRequest, nil
+func groupHandler(ctx context.Context, request interface{}, svc store.Store) (interface{}, int, error) {
+	response, err := svc.GetGroup(request.(*store.GroupRequest))
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return response, http.StatusOK, nil
 }
 
-func makePanicHandler(logger log.Logger) {
+func entityHandler(ctx context.Context, request interface{}, svc store.Store) (interface{}, int, error) {
+	response, err := svc.PutEntity(request)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return response, http.StatusCreated, nil
+}
+
+func makePanicHandler(logger log.Logger) panicFunc {
 	return func(rw http.ResponseWriter, r *http.Request, data interface{}) {
-		logger.Log("panic", data)
-		rw.WriteHeader(http.StatusInternalServerError)
-		rw.Write(errorInternalServerError)
+		renderServerError(rw, logger, data)
 	}
+}
+
+func renderServerError(rw http.ResponseWriter, logger log.Logger, err interface{}) {
+	logger.Log("error", err)
+	msg, _ := encodeResponse(MessageResponse{"An unexpected error happened."})
+	rw.WriteHeader(http.StatusInternalServerError)
+	rw.Write(msg)
+}
+
+func renderBadRequest(rw http.ResponseWriter, logger log.Logger, err interface{}) {
+	logger.Log("bad-request", err)
+	msg, _ := encodeResponse(MessageResponse{fmt.Sprint("Bad request: ", err)})
+	rw.WriteHeader(http.StatusBadRequest)
+	rw.Write(msg)
 }
 
 func encodeResponse(response interface{}) ([]byte, error) {
