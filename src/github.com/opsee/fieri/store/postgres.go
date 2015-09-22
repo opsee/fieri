@@ -43,7 +43,7 @@ func (pg *Postgres) PutInstance(instance *Instance) error {
 
 	// i don't really want to use transactions for this right now until a refactor
 	for _, group := range instance.Groups {
-		err := pg.PutGroup(group)
+		err := pg.ensureGroup(group)
 		if err != nil {
 			return err
 		}
@@ -121,7 +121,7 @@ func (pg *Postgres) PutGroup(group *Group) error {
 
 	// i don't really want to use transactions for this right now until a refactor
 	for _, instance := range group.Instances {
-		err := pg.PutInstance(instance)
+		err := pg.ensureInstance(instance)
 		if err != nil {
 			return err
 		}
@@ -185,5 +185,15 @@ func (pg *Postgres) CountGroups(options *Options) (int, error) {
 
 func (pg *Postgres) DeleteGroups() error {
 	_, err := pg.db.Exec("delete from groups")
+	return err
+}
+
+func (pg *Postgres) ensureInstance(instance *Instance) error {
+	_, err := pg.db.Exec("insert into instances (id, customer_id, type, data) select ($1::varchar(128)) as id, $2 as customer_id, $3 as type, $4 as data where not exists (select id from instances where id = $1 and customer_id = $2)", instance.Id, instance.CustomerId, instance.Type, instance.Data)
+	return err
+}
+
+func (pg *Postgres) ensureGroup(group *Group) error {
+	_, err := pg.db.Exec("insert into groups (name, customer_id, type, data) select ($1::varchar(128)) as name, $2 as customer_id, $3 as type, $4 as data where not exists (select name from groups where name = $1 and customer_id = $2)", group.Name, group.CustomerId, group.Type, group.Data)
 	return err
 }
