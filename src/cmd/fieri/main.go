@@ -2,8 +2,9 @@ package main
 
 import (
 	kvlog "github.com/go-kit/kit/log"
-	"github.com/opsee/fieri/api"
 	"github.com/opsee/fieri/consumer"
+	"github.com/opsee/fieri/onboarder"
+	"github.com/opsee/fieri/service"
 	"github.com/opsee/fieri/store"
 	"log"
 	"os"
@@ -47,11 +48,14 @@ func main() {
 		log.Fatal("Error initializing nsq consumer:", err)
 	}
 
-	addr := os.Getenv("FIERI_API_ADDR")
+	addr := os.Getenv("FIERI_HTTP_ADDR")
 	if addr == "" {
-		log.Fatal("You have to give me a listening address by setting the FIERI_API_ADDR env var")
+		log.Fatal("You have to give me a listening address by setting the FIERI_HTTP_ADDR env var")
 	}
-	api.StartHTTP(addr, db, kvlogger)
+
+	onboard := onboarder.NewOnboarder()
+	service := service.NewService(db, onboard, kvlogger)
+	service.StartHTTP(addr)
 
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, os.Kill)

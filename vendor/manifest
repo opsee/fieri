@@ -130,6 +130,18 @@
 			"branch": "master"
 		},
 		{
+			"importpath": "github.com/opsee/awscan",
+			"repository": "https://github.com/opsee/awscan",
+			"revision": "de3af7ce50cd8118cb571f3838671cac571e8d2d",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/satori/go.uuid",
+			"repository": "https://github.com/satori/go.uuid",
+			"revision": "08f0718b61e95ddba0ade3346725fe0e4bf28ca6",
+			"branch": "master"
+		},
+		{
 			"importpath": "github.com/stretchr/objx",
 			"repository": "https://github.com/stretchr/objx",
 			"revision": "cbeaeb16a013161a98496fad62933b1d21786672",
