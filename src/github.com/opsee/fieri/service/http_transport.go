@@ -30,7 +30,8 @@ func (s *service) StartHTTP(addr string) {
 	router.GET("/groups/:type", s.wrapHandler(ctx, decodeGroupsRequest, s.groupsHandler))
 	router.GET("/group/:type/:id", s.wrapHandler(ctx, decodeGroupsRequest, s.groupHandler))
 	router.POST("/entity/:type", s.wrapHandler(ctx, decodeEntityRequest, s.entityHandler))
-	router.POST("/customers", s.wrapHandler(ctx, decodeCustomerRequest, s.customerHandler))
+	router.POST("/onboard", s.wrapHandler(ctx, decodeOnboardRequest, s.onboardHandler))
+	router.GET("/customer", s.wrapHandler(ctx, decodeCustomerRequest, s.customerHandler))
 	http.ListenAndServe(addr, router)
 }
 
@@ -144,7 +145,7 @@ func decodeEntityRequest(r *http.Request, params httprouter.Params) (interface{}
 	return entity, nil
 }
 
-func decodeCustomerRequest(r *http.Request, params httprouter.Params) (interface{}, error) {
+func decodeOnboardRequest(r *http.Request, params httprouter.Params) (interface{}, error) {
 	customerId := r.Header.Get("Customer-Id")
 	if customerId == "" {
 		return nil, errMissingCustomerId
@@ -171,6 +172,16 @@ func decodeCustomerRequest(r *http.Request, params httprouter.Params) (interface
 	}
 
 	request.CustomerId = customerId
+	return request, nil
+}
+
+func decodeCustomerRequest(r *http.Request, params httprouter.Params) (interface{}, error) {
+	customerId := r.Header.Get("Customer-Id")
+	if customerId == "" {
+		return nil, errMissingCustomerId
+	}
+
+	request := &store.CustomerRequest{Id: customerId}
 	return request, nil
 }
 
@@ -223,9 +234,18 @@ func (s *service) entityHandler(ctx context.Context, request interface{}) (inter
 	return response, http.StatusCreated, nil
 }
 
-func (s *service) customerHandler(ctx context.Context, request interface{}) (interface{}, int, error) {
+func (s *service) onboardHandler(ctx context.Context, request interface{}) (interface{}, int, error) {
 	response := s.Onboard(request.(*onboarder.OnboardRequest))
 	return response, http.StatusCreated, nil
+}
+
+func (s *service) customerHandler(ctx context.Context, request interface{}) (interface{}, int, error) {
+	response, err := s.GetCustomer(request.(*store.CustomerRequest))
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return response, http.StatusOK, nil
 }
 
 func (s *service) makePanicHandler() panicFunc {

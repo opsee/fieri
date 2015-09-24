@@ -3,6 +3,7 @@ package store
 import (
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
+	"time"
 )
 
 type Postgres struct {
@@ -22,18 +23,26 @@ func NewPostgres(connection string) (Store, error) {
 
 func (pg *Postgres) PutEntity(entity interface{}) (*EntityResponse, error) {
 	var (
-		err      error
-		response *EntityResponse
+		err        error
+		response   *EntityResponse
+		customerId string
 	)
 
 	switch entity.(type) {
 	case *Instance:
 		err = pg.putInstance(entity.(*Instance))
 		response = &EntityResponse{entity.(*Instance).Type}
+		customerId = entity.(*Instance).CustomerId
 
 	case *Group:
 		err = pg.putGroup(entity.(*Group))
 		response = &EntityResponse{entity.(*Group).Type}
+		customerId = entity.(*Group).CustomerId
+	}
+
+	if err == nil {
+		customer := &Customer{Id: customerId, LastSync: time.Now()}
+		err = pg.putCustomer(customer)
 	}
 
 	return response, err
@@ -212,6 +221,12 @@ func (pg *Postgres) putGroup(group *Group) error {
 	}
 
 	return nil
+}
+
+func (pg *Postgres) putCustomer(customer *Customer) error {
+	query := "with update_customers as (update customers set last_sync = :last_sync where id = :id returning id), insert_customers as (insert into customers (id, last_sync) select :id as id, :last_sync as last_sync where not exists (select id from update_customers limit 1) returning id) select * from update_customers union all select * from insert_customers;"
+	_, err := pg.db.NamedExec(query, customer)
+	return err
 }
 
 func (pg *Postgres) ensureInstance(instance *Instance) error {
