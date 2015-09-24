@@ -113,6 +113,7 @@ func (o *onboarder) scan(request *OnboardRequest) {
 			continue
 		}
 
-		o.producer.Publish(fmt.Sprint("%s.%s", request.CustomerId, o.topic), msg)
+		o.producer.Publish(fmt.Sprintf("%s.%s", request.CustomerId, o.topic), msg)
+		logger.Log("resource-type", outEvent.ResourceType)
 	}
 }
