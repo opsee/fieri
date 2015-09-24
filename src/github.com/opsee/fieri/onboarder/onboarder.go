@@ -25,10 +25,10 @@ type OnboardRequest struct {
 }
 
 type Event struct {
-	RequestId    string `json:"request_id"`
-	CustomerId   string `json:"customer_id"`
-	ResourceType string `json:"resource_type"`
-	Error        string `json:"error"`
+	RequestId  string `json:"request_id"`
+	CustomerId string `json:"customer_id"`
+	EventType  string `json:"event_type"`
+	Error      string `json:"error"`
 }
 
 type OnboardResponse struct {
@@ -58,7 +58,8 @@ func (o *onboarder) Onboard(request *OnboardRequest) *OnboardResponse {
 }
 
 func (o *onboarder) scan(request *OnboardRequest) {
-	logger := log.NewContext(o.logger).With("scanning", true, "request-id", request.RequestId)
+	logger := log.NewContext(o.logger).With("scan-request-id", request.RequestId)
+	topic := fmt.Sprintf("%s.%s", request.CustomerId, o.topic)
 
 	disco := awscan.NewDiscoverer(
 		awscan.NewScanner(
@@ -103,7 +104,7 @@ func (o *onboarder) scan(request *OnboardRequest) {
 				goto publish
 			}
 
-			outEvent.ResourceType = ent.Type
+			outEvent.EventType = ent.Type
 		}
 
 	publish:
@@ -113,7 +114,17 @@ func (o *onboarder) scan(request *OnboardRequest) {
 			continue
 		}
 
-		o.producer.Publish(fmt.Sprintf("%s.%s", request.CustomerId, o.topic), msg)
-		logger.Log("resource-type", outEvent.ResourceType)
+		o.producer.Publish(topic, msg)
+		logger.Log("resource-type", outEvent.EventType)
 	}
+
+	// alright, we done
+	doneEvent := &Event{
+		CustomerId: request.CustomerId,
+		RequestId:  request.RequestId,
+		EventType:  "Done",
+	}
+	doneMsg, _ := json.Marshal(doneEvent)
+	o.producer.Publish(topic, doneMsg)
+	logger.Log("done", true)
 }
