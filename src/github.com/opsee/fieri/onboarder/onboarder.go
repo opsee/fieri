@@ -125,6 +125,7 @@ func (o *onboarder) scan(request *OnboardRequest) {
 		EventType:  "Done",
 	}
 	doneMsg, _ := json.Marshal(doneEvent)
+
 	o.producer.Publish(topic, doneMsg)
 	logger.Log("done", true)
 }

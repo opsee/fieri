@@ -12,6 +12,7 @@ type Store interface {
 	ListInstances(*InstancesRequest) (*InstancesResponse, error)
 	CountInstances(*InstancesRequest) (*CountResponse, error)
 	GetGroup(*GroupRequest) (*GroupResponse, error)
+	GetCustomer(*CustomerRequest) (*CustomerResponse, error)
 	ListGroups(*GroupsRequest) (*GroupsResponse, error)
 	CountGroups(*GroupsRequest) (*CountResponse, error)
 }
@@ -56,12 +57,27 @@ type GroupsResponse struct {
 	Groups []*Group `json:"group"`
 }
 
+type CustomerRequest struct {
+	Id string `json:"id"`
+}
+
+type CustomerResponse struct {
+	Customer *Customer `json:"customer"`
+}
+
 type EntityResponse struct {
 	Type string `json:"type"`
 }
 
 type CountResponse struct {
 	Count int `json:"count"`
+}
+
+type Customer struct {
+	Id        string    `json:"id"`
+	LastSync  time.Time `json:"last_sync" db:"last_sync"`
+	CreatedAt time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
 }
 
 type Instance struct {

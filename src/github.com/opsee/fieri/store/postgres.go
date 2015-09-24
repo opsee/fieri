@@ -138,6 +138,17 @@ func (pg *Postgres) DeleteGroups() error {
 	return err
 }
 
+func (pg *Postgres) GetCustomer(request *CustomerRequest) (*CustomerResponse, error) {
+	if request.Id == "" {
+		return nil, ErrMissingCustomerId
+	}
+
+	customer := new(Customer)
+	err := pg.db.Get(customer, "select * from customers where id = $1", request.Id)
+
+	return &CustomerResponse{customer}, err
+}
+
 func (pg *Postgres) listInstances(request *InstancesRequest) ([]*Instance, error) {
 	if request.CustomerId == "" {
 		return nil, ErrMissingCustomerId
