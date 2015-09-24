@@ -30,8 +30,9 @@ run: docker
 		--link lookupd:lookupd \
 		-e NSQD_HOST="nsqd:4150" \
 		-e LOOKUPD_HOSTS="http://lookupd:4161" \
-	  -e FIERI_TOPIC="discovery" \
-		-e FIERI_API_ADDR=":9092" \
+	  -e BASTION_DISCOVERY_TOPIC="discovery" \
+		-e FIERI_ONBOARDING_TOPIC="onboarding" \
+		-e FIERI_HTTP_ADDR=":9092" \
 		-p 9092:9092 \
 		--rm \
 		quay.io/opsee/fieri

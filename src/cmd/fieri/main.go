@@ -2,6 +2,7 @@ package main
 
 import (
 	kvlog "github.com/go-kit/kit/log"
+	"github.com/nsqio/go-nsq"
 	"github.com/opsee/fieri/consumer"
 	"github.com/opsee/fieri/onboarder"
 	"github.com/opsee/fieri/service"
@@ -37,29 +38,44 @@ func main() {
 		concurrency = 1
 	}
 
-	topic := os.Getenv("FIERI_TOPIC")
-	if topic == "" {
-		log.Fatal("You have to give me a topic to consume by setting the FIERI_TOPIC env var")
+	bastionDiscoveryTopic := os.Getenv("BASTION_DISCOVERY_TOPIC")
+	if bastionDiscoveryTopic == "" {
+		log.Fatal("You have to give me a topic to consume by setting the BASTION_DISCOVERY_TOPIC env var")
 	}
 
 	lookupds := strings.Split(lookupdHosts, ",")
-	nsq, err := consumer.NewNsq(lookupds, db, kvlogger, concurrency, topic)
+	nsqConsumer, err := consumer.NewNsq(lookupds, db, kvlogger, concurrency, bastionDiscoveryTopic)
 	if err != nil {
 		log.Fatal("Error initializing nsq consumer:", err)
 	}
+
+	nsqdHost := os.Getenv("NSQD_HOST")
+	if nsqdHost == "" {
+		log.Fatal("Error connecting to nsqd, you need to set NSQD_HOST")
+	}
+
+	producer, err := nsq.NewProducer(nsqdHost, nsq.NewConfig())
+	if err != nil {
+		log.Fatal("Error connecting to nsqd: ", err)
+	}
+
+	onboardTopic := os.Getenv("FIERI_ONBOARDING_TOPIC")
+	if onboardTopic == "" {
+		log.Fatal("You have to give me a topic to publish onboarding by setting the FIERI_ONBOARDING_TOPIC env var")
+	}
+	onboarder := onboarder.NewOnboarder(db, producer, kvlogger, onboardTopic)
 
 	addr := os.Getenv("FIERI_HTTP_ADDR")
 	if addr == "" {
 		log.Fatal("You have to give me a listening address by setting the FIERI_HTTP_ADDR env var")
 	}
 
-	onboard := onboarder.NewOnboarder()
-	service := service.NewService(db, onboard, kvlogger)
+	service := service.NewService(db, onboarder, kvlogger)
 	service.StartHTTP(addr)
 
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, os.Kill)
 	<-interrupt
 
-	log.Fatal(nsq.Stop())
+	log.Fatal(nsqConsumer.Stop())
 }

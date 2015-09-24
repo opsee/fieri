@@ -29,7 +29,7 @@ func (s *service) StartHTTP(addr string) {
 	router.GET("/groups", s.wrapHandler(ctx, decodeGroupRequest, s.groupsHandler))
 	router.GET("/groups/:type", s.wrapHandler(ctx, decodeGroupsRequest, s.groupsHandler))
 	router.GET("/group/:type/:id", s.wrapHandler(ctx, decodeGroupsRequest, s.groupHandler))
-	router.POST("/:type", s.wrapHandler(ctx, decodeEntityRequest, s.entityHandler))
+	router.POST("/entity/:type", s.wrapHandler(ctx, decodeEntityRequest, s.entityHandler))
 	router.POST("/customers", s.wrapHandler(ctx, decodeCustomerRequest, s.customerHandler))
 	http.ListenAndServe(addr, router)
 }

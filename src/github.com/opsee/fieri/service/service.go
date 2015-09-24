@@ -39,6 +39,7 @@ var (
 	errMissingAccessKey     = errors.New("missing access_key.")
 	errMissingSecretKey     = errors.New("missing secret_key.")
 	errMissingEmail         = errors.New("missing email.")
+	errMissingRequestId     = errors.New("missing request id.")
 )
 
 func NewService(store store.Store, onboarder onboarder.Onboarder, logger log.Logger) *service {
