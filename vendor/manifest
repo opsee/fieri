@@ -106,6 +106,12 @@
 			"branch": "master"
 		},
 		{
+			"importpath": "github.com/julienschmidt/httprouter",
+			"repository": "https://github.com/julienschmidt/httprouter",
+			"revision": "109e267447e95ad1bb48b758e40dd7453eb7b039",
+			"branch": "master"
+		},
+		{
 			"importpath": "github.com/lib/pq",
 			"repository": "https://github.com/lib/pq",
 			"revision": "b269bd035a727d6c1081f76e7a239a1b00674c40",
@@ -121,6 +127,18 @@
 			"importpath": "github.com/nsqio/go-nsq",
 			"repository": "https://github.com/nsqio/go-nsq",
 			"revision": "383c07cb720e95787ddfc616fe8eb0136254e626",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/opsee/awscan",
+			"repository": "https://github.com/opsee/awscan",
+			"revision": "de3af7ce50cd8118cb571f3838671cac571e8d2d",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/satori/go.uuid",
+			"repository": "https://github.com/satori/go.uuid",
+			"revision": "08f0718b61e95ddba0ade3346725fe0e4bf28ca6",
 			"branch": "master"
 		},
 		{

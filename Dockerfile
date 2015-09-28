@@ -9,8 +9,9 @@ ENV AWS_DEFAULT_REGION=""
 ENV AWS_INSTANCE_ID=""
 ENV AWS_SESSION_TOKEN=""
 ENV FIERI_CONCURRENCY=""
-ENV FIERI_TOPIC=""
-ENV FIERI_API_ADDR=""
+ENV BASTION_DISCOVERY_TOPIC=""
+ENV FIERI_ONBOARDING_TOPIC=""
+ENV FIERI_HTTP_ADDR=""
 
 RUN apk add --update bash ca-certificates curl
 RUN curl -Lo /opt/bin/migrate https://s3-us-west-2.amazonaws.com/opsee-releases/go/migrate/migrate-linux-amd64 && \
