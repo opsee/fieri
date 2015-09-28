@@ -23,7 +23,7 @@ create trigger trg_instances_updated_at before update on instances for each row 
 
 
 
-create type group_type as enum ('security', 'rds-security', 'elb', 'autoscaler', 'tag');
+create type group_type as enum ('security', 'rds-security', 'elb', 'autoscaling', 'tag');
 create table groups (
 	name character varying(128) not null,
 	customer_id UUID not null,
