@@ -58,7 +58,7 @@ func (h *nsqHandler) HandleMessage(m *nsq.Message) error {
 		return err
 	}
 
-	entity, err := store.NewEntity(event.MessageType, event.CustomerId, event.MessageBody)
+	entity, err := store.NewEntity(event.MessageType, event.CustomerId, []byte(event.MessageBody))
 	if err != nil {
 		return err
 	}

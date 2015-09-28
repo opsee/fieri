@@ -41,9 +41,6 @@ func (suite *TestSuite) SetupSuite() {
 	suite.LoadBalancers = loadLoadBalancers(t)
 	suite.RdsInstances = loadRdsInstances(t)
 	suite.RdsSecurityGroups = loadRdsSecurityGroups(t)
-
-	// suite.Store.DeleteInstances()
-	// suite.Store.DeleteGroups()
 }
 
 func (suite *TestSuite) TearDownSuite() {
@@ -112,7 +109,7 @@ func publishEvent(producer *nsq.Producer, messageType string, message interface{
 	event := &consumer.Event{
 		CustomerId:  testCustomerId,
 		MessageType: messageType,
-		MessageBody: msg,
+		MessageBody: string(msg),
 	}
 	eventBytes, _ := json.Marshal(event)
 	producer.Publish(testTopic, eventBytes)

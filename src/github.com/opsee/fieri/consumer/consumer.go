@@ -11,5 +11,5 @@ const (
 type Event struct {
 	CustomerId  string `json:"customer_id,omitempty"`
 	MessageType string `json:"type"`
-	MessageBody []byte `json:"event"`
+	MessageBody string `json:"event"`
 }
