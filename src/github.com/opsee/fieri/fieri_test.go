@@ -261,6 +261,6 @@ func readJson(filePath string, thing interface{}) error {
 
 	decoder := json.NewDecoder(file)
 
-	err2 := decoder.Decode(thing)
-	return err2
+	err = decoder.Decode(thing)
+	return err
 }
