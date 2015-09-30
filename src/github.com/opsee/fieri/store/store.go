@@ -162,6 +162,7 @@ type DBSecurityGroupData struct {
 }
 
 type AutoScalingGroupData struct {
+	AutoScalingGroupName    string
 	AvailabilityZones       []string
 	CreatedTime             time.Time
 	DefaultCooldown         int
@@ -290,7 +291,7 @@ func NewEntity(entityType, customerId string, blob []byte) (interface{}, error) 
 			break
 		}
 
-		if autoscalingData.LaunchConfigurationName == "" {
+		if autoscalingData.AutoScalingGroupName == "" {
 			err = ErrMissingGroupId
 			break
 		}
@@ -391,6 +392,44 @@ func NewGroup(customerId string, groupData interface{}) *Group {
 			Name:       dbsg.DBSecurityGroupName,
 			Type:       DBSecurityGroupStoreType,
 			Data:       jsonD,
+		}
+
+	case *ELBData:
+		elb := groupData.(*ELBData)
+		instances := make([]*Instance, len(elb.Instances))
+		for i, instance := range elb.Instances {
+			dat := &InstanceData{}
+			if id, ok := instance["InstanceId"].(string); ok {
+				dat.InstanceId = id
+			}
+			instances[i] = NewInstance(customerId, dat)
+		}
+		jsonD, _ = json.Marshal(elb)
+		group = &Group{
+			CustomerId: customerId,
+			Name:       elb.LoadBalancerName,
+			Type:       ELBStoreType,
+			Data:       jsonD,
+			Instances:  instances,
+		}
+
+	case *AutoScalingGroupData:
+		autoscaling := groupData.(*AutoScalingGroupData)
+		instances := make([]*Instance, len(autoscaling.Instances))
+		for i, instance := range autoscaling.Instances {
+			dat := &InstanceData{}
+			if id, ok := instance["InstanceId"].(string); ok {
+				dat.InstanceId = id
+			}
+			instances[i] = NewInstance(customerId, dat)
+		}
+		jsonD, _ = json.Marshal(autoscaling)
+		group = &Group{
+			CustomerId: customerId,
+			Name:       autoscaling.AutoScalingGroupName,
+			Type:       AutoScalingGroupStoreType,
+			Data:       jsonD,
+			Instances:  instances,
 		}
 
 	}

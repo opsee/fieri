@@ -58,6 +58,13 @@
 			"path": "/internal/signer/v4"
 		},
 		{
+			"importpath": "github.com/aws/aws-sdk-go/service/autoscaling",
+			"repository": "https://github.com/aws/aws-sdk-go",
+			"revision": "2778c8354eae199e75678754615f5beb46a77989",
+			"branch": "master",
+			"path": "/service/autoscaling"
+		},
+		{
 			"importpath": "github.com/aws/aws-sdk-go/service/ec2",
 			"repository": "https://github.com/aws/aws-sdk-go",
 			"revision": "59b2dc566b52c3681974a0b98fb7c7d6ef70597f",

@@ -1,0 +1,19 @@
+{
+    "AutoScalingGroups": [
+        {
+          "AutoScalingGroupName": "demo asg",
+          "AvailabilityZones": ["us-east-1d"],
+          "DefaultCooldown": 300,
+          "CreatedTime": "2015-01-20T02:45:57.550Z", 
+          "DesiredCapacity": 1,
+          "HealthCheckGracePeriod": 300,
+          "HealthCheckType": "EC2",
+          "Instances": [],
+          "LaunchConfigurationName": "demo instance",
+          "MaxSize": 1,
+          "MinSize": 1,
+          "TerminationPolicies": ["Default"],
+          "VPCZoneIdentifier": "subnet-27267c0c"
+        }
+     ]
+}
