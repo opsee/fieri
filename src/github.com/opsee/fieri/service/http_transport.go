@@ -6,6 +6,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"github.com/opsee/fieri/onboarder"
 	"github.com/opsee/fieri/store"
+	"github.com/yeller/yeller-golang"
 	"golang.org/x/net/context"
 	"io/ioutil"
 	"net/http"
@@ -167,8 +168,8 @@ func decodeOnboardRequest(r *http.Request, params httprouter.Params) (interface{
 		return nil, errMissingSecretKey
 	}
 
-	if request.Email == "" {
-		return nil, errMissingEmail
+	if request.UserId == 0 {
+		return nil, errMissingUserId
 	}
 
 	request.CustomerId = customerId
@@ -242,7 +243,7 @@ func (s *service) onboardHandler(ctx context.Context, request interface{}) (inte
 func (s *service) customerHandler(ctx context.Context, request interface{}) (interface{}, int, error) {
 	response, err := s.GetCustomer(request.(*store.CustomerRequest))
 	if err != nil {
-		return nil, 0, err
+		return MessageResponse{"No customer exists."}, http.StatusOK, nil
 	}
 
 	return response, http.StatusOK, nil
@@ -250,6 +251,7 @@ func (s *service) customerHandler(ctx context.Context, request interface{}) (int
 
 func (s *service) makePanicHandler() panicFunc {
 	return func(rw http.ResponseWriter, r *http.Request, data interface{}) {
+		yeller.NotifyPanic(data)
 		s.renderServerError(rw, data)
 	}
 }

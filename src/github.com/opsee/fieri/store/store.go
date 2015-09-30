@@ -66,7 +66,7 @@ type CustomerResponse struct {
 }
 
 type EntityResponse struct {
-	Type string `json:"type"`
+	Entity interface{} `json:"entity"`
 }
 
 type CountResponse struct {

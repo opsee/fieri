@@ -1,0 +1,24 @@
+#!/usr/bin/env python
+# vim: set filetype=python
+
+import glob, os.path
+
+def go_write_slack(filepath):
+    """writes a template to a go package"""
+    name = os.path.basename(filepath).split(".")[0]
+    dest = os.path.join("dist", "go", "slack", "{}.go".format(name))
+    template = ""
+    with open(filepath, "r") as f:
+        template = f.read()
+    with open(dest, "w") as f:
+        f.write("package slack\n")
+        f.write("var {} = `{}`\n".format("".join([w.capitalize() for w in name.split("-")]), template))
+
+package_func = {
+    "slack": go_write_slack
+}
+
+for file in glob.glob("src/**/*.mustache"):
+    p, f = os.path.split(file)
+    pkg = p.split("/")[-1]
+    package_func[pkg](file)

@@ -2,7 +2,7 @@ package main
 
 import (
 	kvlog "github.com/go-kit/kit/log"
-	"github.com/nsqio/go-nsq"
+
 	"github.com/opsee/fieri/consumer"
 	"github.com/opsee/fieri/onboarder"
 	"github.com/opsee/fieri/service"
@@ -13,6 +13,10 @@ import (
 	"os/signal"
 	"strconv"
 	"strings"
+)
+
+const (
+	vapeEndpoint = "https://vape.opsy.co/notifications/send/email"
 )
 
 func main() {
@@ -51,21 +55,11 @@ func main() {
 		log.Fatal("Error initializing nsq consumer:", err)
 	}
 
-	nsqdHost := os.Getenv("NSQD_HOST")
-	if nsqdHost == "" {
-		log.Fatal("Error connecting to nsqd, you need to set NSQD_HOST")
+	slackEndpoint := os.Getenv("SLACK_ENDPOINT")
+	if slackEndpoint == "" {
+		log.Println("WARN: SLACK_ENDPOINT was not set, so we're not using slack for notifications.")
 	}
-
-	producer, err := nsq.NewProducer(nsqdHost, nsq.NewConfig())
-	if err != nil {
-		log.Fatal("Error connecting to nsqd: ", err)
-	}
-
-	onboardTopic := os.Getenv("FIERI_ONBOARDING_TOPIC")
-	if onboardTopic == "" {
-		log.Fatal("You have to give me a topic to publish onboarding by setting the FIERI_ONBOARDING_TOPIC env var")
-	}
-	onboarder := onboarder.NewOnboarder(db, producer, kvlogger, onboardTopic)
+	onboarder := onboarder.NewOnboarder(db, kvlogger, onboarder.NewNotifier(vapeEndpoint, slackEndpoint))
 
 	addr := os.Getenv("FIERI_HTTP_ADDR")
 	if addr == "" {

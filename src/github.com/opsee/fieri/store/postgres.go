@@ -31,12 +31,12 @@ func (pg *Postgres) PutEntity(entity interface{}) (*EntityResponse, error) {
 	switch entity.(type) {
 	case *Instance:
 		err = pg.putInstance(entity.(*Instance))
-		response = &EntityResponse{entity.(*Instance).Type}
+		response = &EntityResponse{entity}
 		customerId = entity.(*Instance).CustomerId
 
 	case *Group:
 		err = pg.putGroup(entity.(*Group))
-		response = &EntityResponse{entity.(*Group).Type}
+		response = &EntityResponse{entity}
 		customerId = entity.(*Group).CustomerId
 	}
 
