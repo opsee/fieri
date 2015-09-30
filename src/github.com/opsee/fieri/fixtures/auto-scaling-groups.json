@@ -8,7 +8,11 @@
           "DesiredCapacity": 1,
           "HealthCheckGracePeriod": 300,
           "HealthCheckType": "EC2",
-          "Instances": [],
+          "Instances": [
+            {
+                "InstanceId": "i-39aae6fb"
+            }
+          ],
           "LaunchConfigurationName": "demo instance",
           "MaxSize": 1,
           "MinSize": 1,
