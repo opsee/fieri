@@ -54,7 +54,7 @@ type GroupResponse struct {
 }
 
 type GroupsResponse struct {
-	Groups []*Group `json:"group"`
+	Groups []*Group `json:"groups"`
 }
 
 type CustomerRequest struct {
