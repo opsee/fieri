@@ -2,7 +2,7 @@
 Description=Fieri
 After=docker.service
 Requires=docker.service
-# Wants=%p-elb@%i.service
+Wants=%p-elb@%i.service
 
 [Service]
 Restart=always
