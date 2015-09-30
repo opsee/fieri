@@ -2,6 +2,7 @@ package fieri
 
 import (
 	"encoding/json"
+	"github.com/aws/aws-sdk-go/service/autoscaling"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/elb"
 	"github.com/aws/aws-sdk-go/service/rds"
@@ -29,6 +30,7 @@ type TestSuite struct {
 	LoadBalancers     []*elb.LoadBalancerDescription
 	RdsInstances      []*rds.DBInstance
 	RdsSecurityGroups []*rds.DBSecurityGroup
+	AutoScalingGroups []*autoscaling.Group
 }
 
 func (suite *TestSuite) SetupSuite() {
@@ -41,6 +43,7 @@ func (suite *TestSuite) SetupSuite() {
 	suite.LoadBalancers = loadLoadBalancers(t)
 	suite.RdsInstances = loadRdsInstances(t)
 	suite.RdsSecurityGroups = loadRdsSecurityGroups(t)
+	suite.AutoScalingGroups = loadAutoScalingGroups(t)
 }
 
 func (suite *TestSuite) TearDownSuite() {
@@ -90,6 +93,17 @@ func (suite *TestSuite) TestELBGroups() {
 	suite.Equal(len(suite.LoadBalancers), len(groups.Groups))
 }
 
+func (suite *TestSuite) TestAutoScalingGroups() {
+	for _, group := range suite.AutoScalingGroups {
+		publishEvent(suite.Producer, "AutoScalingGroup", group)
+	}
+
+	setupConsumer(suite)
+	time.Sleep(500 * time.Millisecond)
+	groups, _ := suite.Store.ListGroups(&store.GroupsRequest{CustomerId: testCustomerId, Type: "autoscaling"})
+	suite.Equal(len(suite.AutoScalingGroups), len(groups.Groups))
+}
+
 func (suite *TestSuite) TestDbSecurityGroups() {
 	for _, group := range suite.RdsSecurityGroups {
 		publishEvent(suite.Producer, "DBSecurityGroup", group)
@@ -106,11 +120,13 @@ func TestTestSuite(t *testing.T) {
 
 func publishEvent(producer *nsq.Producer, messageType string, message interface{}) {
 	msg, _ := json.Marshal(message)
+
 	event := &consumer.Event{
 		CustomerId:  testCustomerId,
 		MessageType: messageType,
 		MessageBody: string(msg),
 	}
+
 	eventBytes, _ := json.Marshal(event)
 	producer.Publish(testTopic, eventBytes)
 }
@@ -174,6 +190,19 @@ func loadRdsInstances(t *testing.T) []*rds.DBInstance {
 	return rdsInstancesJson.DBInstances
 }
 
+func loadAutoScalingGroups(t *testing.T) []*autoscaling.Group {
+	var autoscalingGroupsJson struct {
+		AutoScalingGroups []*autoscaling.Group
+	}
+
+	err := readJson("fixtures/auto-scaling-groups.json", &autoscalingGroupsJson)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return autoscalingGroupsJson.AutoScalingGroups
+}
+
 func loadLoadBalancers(t *testing.T) []*elb.LoadBalancerDescription {
 	var loadBalancersJson struct {
 		LoadBalancerDescriptions []*elb.LoadBalancerDescription
@@ -231,7 +260,7 @@ func readJson(filePath string, thing interface{}) error {
 	defer file.Close()
 
 	decoder := json.NewDecoder(file)
-	err = decoder.Decode(thing)
 
+	err = decoder.Decode(thing)
 	return err
 }

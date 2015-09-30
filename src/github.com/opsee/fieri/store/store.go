@@ -161,6 +161,27 @@ type DBSecurityGroupData struct {
 	EC2SecurityGroups          []map[string]interface{}
 }
 
+type AutoScalingGroupData struct {
+	AutoScalingGroupName    string
+	AvailabilityZones       []string
+	CreatedTime             time.Time
+	DefaultCooldown         int
+	DesiredCapacity         int
+	HealthCheckGracePeriod  int
+	HealthCheckType         string
+	InstanceId              string
+	Instances               []map[string]interface{}
+	LaunchConfigurationName string
+	LoadBalancerNames       []map[string]interface{}
+	MaxSize                 int
+	MinSize                 int
+	Name                    string
+	Status                  string
+	Tags                    []map[string]interface{}
+	VPCZoneIdentifier       string
+	TerminationPolicies     []string
+}
+
 type ELBData struct {
 	Subnets                   []string
 	CanonicalHostedZoneNameID string
@@ -179,17 +200,19 @@ type ELBData struct {
 }
 
 const (
-	InstanceEntityType        = "Instance"
-	DBInstanceEntityType      = "DBInstance"
-	SecurityGroupEntityType   = "SecurityGroup"
-	DBSecurityGroupEntityType = "DBSecurityGroup"
-	ELBEntityType             = "LoadBalancerDescription"
+	InstanceEntityType         = "Instance"
+	DBInstanceEntityType       = "DBInstance"
+	SecurityGroupEntityType    = "SecurityGroup"
+	DBSecurityGroupEntityType  = "DBSecurityGroup"
+	AutoScalingGroupEntityType = "AutoScalingGroup"
+	ELBEntityType              = "LoadBalancerDescription"
 
-	InstanceStoreType        = "ec2"
-	DBInstanceStoreType      = "rds"
-	SecurityGroupStoreType   = "security"
-	DBSecurityGroupStoreType = "rds-security"
-	ELBStoreType             = "elb"
+	InstanceStoreType         = "ec2"
+	DBInstanceStoreType       = "rds"
+	SecurityGroupStoreType    = "security"
+	DBSecurityGroupStoreType  = "rds-security"
+	AutoScalingGroupStoreType = "autoscaling"
+	ELBStoreType              = "elb"
 )
 
 var (
@@ -261,6 +284,18 @@ func NewEntity(entityType, customerId string, blob []byte) (interface{}, error) 
 			break
 		}
 		entity = NewGroup(customerId, elbData)
+
+	case AutoScalingGroupEntityType:
+		autoscalingData := &AutoScalingGroupData{}
+		if err = json.Unmarshal(blob, autoscalingData); err != nil {
+			break
+		}
+
+		if autoscalingData.AutoScalingGroupName == "" {
+			err = ErrMissingGroupId
+			break
+		}
+		entity = NewGroup(customerId, autoscalingData)
 	}
 
 	return entity, err
@@ -377,8 +412,27 @@ func NewGroup(customerId string, groupData interface{}) *Group {
 			Data:       jsonD,
 			Instances:  instances,
 		}
-	}
 
+	case *AutoScalingGroupData:
+		autoscaling := groupData.(*AutoScalingGroupData)
+		instances := make([]*Instance, len(autoscaling.Instances))
+		for i, instance := range autoscaling.Instances {
+			dat := &InstanceData{}
+			if id, ok := instance["InstanceId"].(string); ok {
+				dat.InstanceId = id
+			}
+			instances[i] = NewInstance(customerId, dat)
+		}
+		jsonD, _ = json.Marshal(autoscaling)
+		group = &Group{
+			CustomerId: customerId,
+			Name:       autoscaling.AutoScalingGroupName,
+			Type:       AutoScalingGroupStoreType,
+			Data:       jsonD,
+			Instances:  instances,
+		}
+
+	}
 	return group
 }
 
