@@ -160,6 +160,12 @@
 			"branch": "master"
 		},
 		{
+			"importpath": "github.com/yeller/yeller-golang",
+			"repository": "https://github.com/yeller/yeller-golang",
+			"revision": "e03edbbef949924b7122764ba6fe3abb6fc7f51c",
+			"branch": "master"
+		},
+		{
 			"importpath": "golang.org/x/net/context",
 			"repository": "https://go.googlesource.com/net",
 			"revision": "db8e4de5b2d6653f66aea53094624468caad15d2",

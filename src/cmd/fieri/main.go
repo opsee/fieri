@@ -7,6 +7,7 @@ import (
 	"github.com/opsee/fieri/onboarder"
 	"github.com/opsee/fieri/service"
 	"github.com/opsee/fieri/store"
+	"github.com/yeller/yeller-golang"
 	"log"
 	"os"
 	"os/signal"
@@ -16,6 +17,7 @@ import (
 
 func main() {
 	kvlogger := kvlog.NewLogfmtLogger(os.Stdout)
+	yeller.StartWithErrorHandlerEnvApplicationRoot(os.Getenv("YELLER_KEY"), "production", "/build/src/github.com/opsee/fieri", yeller.NewSilentErrorHandler())
 
 	pgConnection := os.Getenv("POSTGRES_CONN")
 	if pgConnection == "" {
