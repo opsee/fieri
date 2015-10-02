@@ -28,6 +28,10 @@ func NewNotifier(vapeEndpoint, slackEndpoint string) *notifier {
 }
 
 func (n *notifier) NotifyEmail(userID int, template string, vars map[string]interface{}) (map[string]interface{}, error) {
+	if n.vapeEndpoint == "" {
+		return nil, nil
+	}
+
 	requestJSON, err := json.Marshal(map[string]interface{}{
 		"user_id":  userID,
 		"template": template,
@@ -57,6 +61,10 @@ func (n *notifier) NotifyEmail(userID int, template string, vars map[string]inte
 }
 
 func (n *notifier) NotifySlack(vars map[string]interface{}) error {
+	if n.slackEndpoint == "" {
+		return nil
+	}
+
 	if template == nil {
 		tmpl, err := mustache.ParseString(slacktmpl.NewCustomer)
 		if err != nil {

@@ -15,10 +15,6 @@ import (
 	"strings"
 )
 
-const (
-	vapeEndpoint = "https://vape.opsy.co/notifications/send/email"
-)
-
 func main() {
 	kvlogger := kvlog.NewLogfmtLogger(os.Stdout)
 	yeller.StartWithErrorHandlerEnvApplicationRoot(os.Getenv("YELLER_KEY"), "production", "/build/src/github.com/opsee/fieri", yeller.NewSilentErrorHandler())
@@ -55,6 +51,10 @@ func main() {
 		log.Fatal("Error initializing nsq consumer:", err)
 	}
 
+	vapeEndpoint := os.Getenv("VAPE_ENDPOINT")
+	if vapeEndpoint == "" {
+		log.Println("WARN: VAPE_ENDPOINT was not set, so we're not going to send emails.")
+	}
 	slackEndpoint := os.Getenv("SLACK_ENDPOINT")
 	if slackEndpoint == "" {
 		log.Println("WARN: SLACK_ENDPOINT was not set, so we're not using slack for notifications.")
