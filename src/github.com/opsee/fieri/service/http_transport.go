@@ -168,6 +168,10 @@ func decodeOnboardRequest(r *http.Request, params httprouter.Params) (interface{
 		return nil, errMissingSecretKey
 	}
 
+	if request.Region == "" {
+		return nil, errMissingRegion
+	}
+
 	if request.UserId == 0 {
 		return nil, errMissingUserId
 	}

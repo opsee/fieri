@@ -38,6 +38,7 @@ var (
 	errMalformedRequestBody = errors.New("malformed request body.")
 	errMissingAccessKey     = errors.New("missing access_key.")
 	errMissingSecretKey     = errors.New("missing secret_key.")
+	errMissingRegion        = errors.New("missing region.")
 	errMissingEmail         = errors.New("missing email.")
 	errMissingRequestId     = errors.New("missing request_id.")
 	errMissingUserId        = errors.New("missing user_id.")
