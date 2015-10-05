@@ -16,24 +16,22 @@ type Onboarder interface {
 }
 
 type OnboardRequest struct {
-	AccessKey  string         `json:"access_key"`
-	SecretKey  string         `json:"secret_key"`
-	Region     string         `json:"region"`
-	CustomerId string         `json:"customer_id"`
-	UserId     int            `json:"user_id"`
-	RequestId  string         `json:"request_id"`
-	Result     *OnboardResult `json:"result"`
-}
-
-type OnboardResult struct {
-	SecurityGroupCount    int `json:"security_group_count"`
-	DBSecurityGroupCount  int `json:"db_security_group_count"`
-	LoadBalancerCount     int `json:"load_balancer_count"`
-	AutoscalingGroupCount int `json:"autoscaling_group_count"`
-	InstanceCount         int `json:"instance_count"`
-	DBInstanceCount       int `json:"db_instance_count"`
-	GroupErrorCount       int `json:"group_error_count"`
-	InstanceErrorCount    int `json:"instance_error_count"`
+	AccessKey             string `json:"access_key"`
+	SecretKey             string `json:"secret_key"`
+	Region                string `json:"region"`
+	CustomerId            string `json:"customer_id"`
+	UserId                int    `json:"user_id"`
+	RequestId             string `json:"request_id"`
+	SecurityGroupCount    int    `json:"security_group_count"`
+	DBSecurityGroupCount  int    `json:"db_security_group_count"`
+	LoadBalancerCount     int    `json:"load_balancer_count"`
+	AutoscalingGroupCount int    `json:"autoscaling_group_count"`
+	InstanceCount         int    `json:"instance_count"`
+	DBInstanceCount       int    `json:"db_instance_count"`
+	GroupErrorCount       int    `json:"group_error_count"`
+	InstanceErrorCount    int    `json:"instance_error_count"`
+	LastError             string `json:"last_error"`
+	CheckCount            int    `json:"check_count"`
 }
 
 type Event struct {
@@ -54,8 +52,6 @@ type onboarder struct {
 }
 
 const (
-	discoveryTemplate      = "discovery-completion"
-	errorTemplate          = "discovery-failure"
 	instanceErrorThreshold = 0.3
 )
 
@@ -75,6 +71,7 @@ func (o *onboarder) Onboard(request *OnboardRequest) *OnboardResponse {
 
 func (o *onboarder) scan(request *OnboardRequest) {
 	var (
+		err       error
 		instances = make(map[string]bool)
 		logger    = log.NewContext(o.logger).With("scan-request-id", request.RequestId)
 		disco     = awscan.NewDiscoverer(
@@ -92,16 +89,13 @@ func (o *onboarder) scan(request *OnboardRequest) {
 	request.AccessKey = ""
 	request.SecretKey = ""
 
-	// set up a result struct
-	request.Result = &OnboardResult{}
-
 	for event := range disco.Discover() {
 		if event.Err != nil {
 			switch event.Err.(*awscan.DiscoveryError).Type {
 			case awscan.InstanceType, awscan.DBInstanceType:
-				request.Result.InstanceErrorCount++
+				request.InstanceErrorCount++
 			default:
-				request.Result.GroupErrorCount++
+				request.GroupErrorCount++
 			}
 
 			o.handleError(event.Err, request)
@@ -129,17 +123,17 @@ func (o *onboarder) scan(request *OnboardRequest) {
 			case awscan.InstanceType:
 				// we'll have to de-dupe instances so use a ghetto set (map)
 				instances[ent.Entity.(*store.Instance).Id] = true
-				request.Result.InstanceCount = card(instances)
+				request.InstanceCount = card(instances)
 			case awscan.DBInstanceType:
-				request.Result.DBInstanceCount++
+				request.DBInstanceCount++
 			case awscan.SecurityGroupType:
-				request.Result.SecurityGroupCount++
+				request.SecurityGroupCount++
 			case awscan.DBSecurityGroupType:
-				request.Result.DBSecurityGroupCount++
+				request.DBSecurityGroupCount++
 			case awscan.AutoScalingGroupType:
-				request.Result.AutoscalingGroupCount++
+				request.AutoscalingGroupCount++
 			case awscan.LoadBalancerType:
-				request.Result.LoadBalancerCount++
+				request.LoadBalancerCount++
 			}
 
 			logger.Log("resource-type", messageType)
@@ -147,41 +141,30 @@ func (o *onboarder) scan(request *OnboardRequest) {
 	}
 
 	if request.TooManyErrors() {
-		o.notifier.NotifyEmail(request.UserId, errorTemplate, map[string]interface{}{})
+		err = o.notifier.NotifyError(request)
+		if err != nil {
+			o.handleError(err, request)
+		}
+
 		o.handleError(fmt.Errorf("too many aws errors"), request)
 		return
 	}
 
-	emailVars := map[string]interface{}{
-		"aws_region":              request.Region,
-		"instance_count":          request.Result.InstanceCount,
-		"db_instance_count":       request.Result.DBInstanceCount,
-		"security_group_count":    request.Result.SecurityGroupCount,
-		"db_security_group_count": request.Result.DBSecurityGroupCount,
-		"load_balancer_count":     request.Result.LoadBalancerCount,
-		"autoscaling_group_count": request.Result.AutoscalingGroupCount,
-		"checks_count":            0,
-	}
-
-	_, err := o.notifier.NotifyEmail(request.UserId, discoveryTemplate, emailVars)
-	if err != nil {
-		o.handleError(err, request)
-	}
-
-	err = o.notifier.NotifySlack(emailVars)
+	err = o.notifier.NotifySuccess(request)
 	if err != nil {
 		o.handleError(err, request)
 	}
 }
 
 func (o *onboarder) handleError(err error, request *OnboardRequest) {
+	request.LastError = err.Error()
 	log.NewContext(o.logger).With("scan-request-id", request.RequestId).Log("error", err.Error())
 	yeller.NotifyInfo(err, map[string]interface{}{"onboard_request": request})
 }
 
 func (r *OnboardRequest) TooManyErrors() bool {
-	return r.Result.GroupErrorCount > 0 ||
-		float64(r.Result.InstanceErrorCount)/float64(r.Result.InstanceCount+r.Result.DBInstanceCount) > instanceErrorThreshold
+	return r.GroupErrorCount > 0 ||
+		float64(r.InstanceErrorCount)/float64(r.InstanceCount+r.DBInstanceCount) > instanceErrorThreshold
 }
 
 func card(m map[string]bool) int {

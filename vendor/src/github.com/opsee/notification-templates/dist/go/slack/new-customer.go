@@ -10,39 +10,48 @@ var NewCustomer = `{
       "fields": [
         {
           "title": "User ID",
-          "value": "{{user_id}}"
+          "value": "{{user_id}}",
+          "short": true
         },
         {
           "title": "AWS Region",
-          "value": "{{aws_region}}"
+          "value": "{{aws_region}}",
+          "short": true
         },
         {
           "title": "EC2 Instances",
-          "value": "{{instance_count}}"
+          "value": "{{instance_count}}",
+          "short": true
         },
         {
           "title": "RDS Instances",
-          "value": "{{db_instance_count}}"
+          "value": "{{db_instance_count}}",
+          "short": true
         },
         {
           "title": "Security Groups",
-          "value": "{{security_group_count}}"
+          "value": "{{security_group_count}}",
+          "short": true
         },
         {
           "title": "RDS Security Groups",
-          "value": "{{db_security_group_count}}"
+          "value": "{{db_security_group_count}}",
+          "short": true
         },
         {
           "title": "Load Balancers",
-          "value": "{{load_balancer_count}}"
+          "value": "{{load_balancer_count}}",
+          "short": true
         },
         {
           "title": "Autoscaling Groups",
-          "value": "{{autoscaling_group_count}}"
+          "value": "{{autoscaling_group_count}}",
+          "short": true
         },
         {
           "title": "Opsee Created Checks",
-          "valuefo": "{{checks_count}}"
+          "value": "{{checks_count}}",
+          "short": true
         }
       ]
     }
