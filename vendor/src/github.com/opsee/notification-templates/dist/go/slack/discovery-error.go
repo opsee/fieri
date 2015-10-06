@@ -15,7 +15,7 @@ var DiscoveryError = `{
         },
         {
           "title": "AWS Region",
-          "value": "{{aws_region}}",
+          "value": "{{region}}",
           "short": true
         },
         {

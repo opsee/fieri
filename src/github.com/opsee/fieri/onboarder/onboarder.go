@@ -163,8 +163,13 @@ func (o *onboarder) handleError(err error, request *OnboardRequest) {
 }
 
 func (r *OnboardRequest) TooManyErrors() bool {
+	total := r.InstanceCount + r.DBInstanceCount
+	if total == 0 {
+		return r.GroupErrorCount > 0
+	}
+
 	return r.GroupErrorCount > 0 ||
-		float64(r.InstanceErrorCount)/float64(r.InstanceCount+r.DBInstanceCount) > instanceErrorThreshold
+		float64(r.InstanceErrorCount)/float64(total) > instanceErrorThreshold
 }
 
 func card(m map[string]bool) int {
