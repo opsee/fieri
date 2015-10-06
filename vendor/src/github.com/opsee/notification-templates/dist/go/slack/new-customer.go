@@ -15,7 +15,7 @@ var NewCustomer = `{
         },
         {
           "title": "AWS Region",
-          "value": "{{aws_region}}",
+          "value": "{{region}}",
           "short": true
         },
         {
@@ -50,7 +50,7 @@ var NewCustomer = `{
         },
         {
           "title": "Opsee Created Checks",
-          "value": "{{checks_count}}",
+          "value": "{{check_count}}",
           "short": true
         }
       ]

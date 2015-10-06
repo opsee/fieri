@@ -89,11 +89,14 @@ func (n *notifier) notifyEmail(request *OnboardRequest, template string) error {
 	}
 
 	defer resp.Body.Close()
+	if resp.StatusCode > 299 {
+		return fmt.Errorf("Bad response from Vape notification endpoint: %s", resp.Status)
+	}
 
 	response := make(map[string]interface{})
 	decoder := json.NewDecoder(resp.Body)
 
-	err = decoder.Decode(response)
+	err = decoder.Decode(&response)
 	if err != nil {
 		return err
 	}
@@ -111,7 +114,19 @@ func (n *notifier) notifySlack(request *OnboardRequest, template *mustache.Templ
 		return nil
 	}
 
-	body := bytes.NewBufferString(template.Render(request))
+	templateVars := make(map[string]interface{})
+
+	j, err := json.Marshal(request)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(j, &templateVars)
+	if err != nil {
+		return err
+	}
+
+	body := bytes.NewBufferString(template.Render(templateVars))
 	resp, err := http.Post(n.slackEndpoint, "application/json", body)
 	if err != nil {
 		return err

@@ -28,6 +28,8 @@ run: docker
 		--link postgresql:postgresql \
 		--link nsqd:nsqd \
 		--link lookupd:lookupd \
+		-e VAPE_ENDPOINT=$(VAPE_ENDPOINT) \
+		-e SLACK_ENDPOINT=$(SLACK_ENDPOINT) \
 		-e NSQD_HOST="nsqd:4150" \
 		-e LOOKUPD_HOSTS="http://lookupd:4161" \
 	  -e BASTION_DISCOVERY_TOPIC="discovery" \
