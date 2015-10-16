@@ -151,7 +151,7 @@
 		{
 			"importpath": "github.com/opsee/notification-templates",
 			"repository": "https://github.com/opsee/notification-templates",
-			"revision": "e2501e7b3b4725a8128bad5672055a61bf4b7971",
+			"revision": "6d9881f89a6f1b99f3f2ae1cae8173029b3f2af0",
 			"branch": "master"
 		},
 		{
