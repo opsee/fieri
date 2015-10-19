@@ -52,10 +52,10 @@ func (pg *Postgres) Start() {
 
 			if req.timestamp-lastEx > pg.expireInterval {
 				go func(req expireReq) {
-					defer pg.expireMut.Unlock()
 					err := pg.expireEntities(req.customerId, req.timestamp)
 					if err != nil {
 						pg.expireMut.Lock()
+						defer pg.expireMut.Unlock()
 						pg.expirys[req.customerId] = req.timestamp
 					}
 				}(req)
