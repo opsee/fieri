@@ -53,9 +53,11 @@ func (pg *Postgres) Start() {
 			if req.timestamp-lastEx > pg.expireInterval {
 				go func(req expireReq) {
 					defer pg.expireMut.Unlock()
-					pg.expireEntities(req.customerId, req.timestamp)
-					pg.expireMut.Lock()
-					pg.expirys[req.customerId] = req.timestamp
+					err := pg.expireEntities(req.customerId, req.timestamp)
+					if err != nil {
+						pg.expireMut.Lock()
+						pg.expirys[req.customerId] = req.timestamp
+					}
 				}(req)
 			}
 		}
@@ -278,6 +280,7 @@ func (pg *Postgres) putCustomer(customer *Customer) error {
 
 func (pg *Postgres) expireEntities(customerId string, lastSync int64) error {
 	lastSyncTime := time.Unix(lastSync, 0).Add(time.Duration(-1*pg.expireThreshold) * time.Second)
+
 	groupExpireQuery := "delete from groups where customer_id = $1 and updated_at < $2"
 	_, err := pg.db.Exec(groupExpireQuery, customerId, lastSyncTime)
 	if err != nil {
