@@ -7,6 +7,7 @@ import (
 )
 
 type Store interface {
+	Start()
 	PutEntity(interface{}) (*EntityResponse, error)
 	GetInstance(*InstanceRequest) (*InstanceResponse, error)
 	ListInstances(*InstancesRequest) (*InstancesResponse, error)

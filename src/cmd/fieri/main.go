@@ -24,7 +24,7 @@ func main() {
 		log.Fatal("You have to give me a postgres connection by setting the POSTGRES_CONN env var")
 	}
 
-	db, err := store.NewPostgres(pgConnection)
+	db, err := store.NewPostgres(pgConnection, 60, 120)
 	if err != nil {
 		log.Fatal("Error initializing postgres:", err)
 	}
@@ -68,6 +68,8 @@ func main() {
 
 	service := service.NewService(db, onboarder, kvlogger)
 	service.StartHTTP(addr)
+
+	db.Start()
 
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, os.Kill)

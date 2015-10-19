@@ -132,10 +132,11 @@ func publishEvent(producer *nsq.Producer, messageType string, message interface{
 }
 
 func setupDb(t *testing.T) store.Store {
-	db, err := store.NewPostgres(os.Getenv("POSTGRES_CONN"))
+	db, err := store.NewPostgres(os.Getenv("POSTGRES_CONN"), 10, 20)
 	if err != nil {
 		t.Fatal(err)
 	}
+	db.Start()
 	return db
 }
 

@@ -1,4 +1,5 @@
 package slack
+
 var DiscoveryError = `{
   "text": "*DISCOVERY ERROR*",
   "username": "ErrorBot",

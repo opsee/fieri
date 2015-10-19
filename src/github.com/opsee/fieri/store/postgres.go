@@ -3,14 +3,25 @@ package store
 import (
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
+	"sync"
 	"time"
 )
 
 type Postgres struct {
-	db *sqlx.DB
+	db              *sqlx.DB
+	expireChan      chan expireReq
+	expirys         map[string]int64
+	expireMut       *sync.Mutex
+	expireInterval  int64
+	expireThreshold int
 }
 
-func NewPostgres(connection string) (Store, error) {
+type expireReq struct {
+	timestamp  int64
+	customerId string
+}
+
+func NewPostgres(connection string, expireInterval, expireThreshold int) (Store, error) {
 	db, err := sqlx.Open("postgres", connection)
 	if err != nil {
 		return nil, err
@@ -18,7 +29,37 @@ func NewPostgres(connection string) (Store, error) {
 	db.SetMaxOpenConns(64)
 	db.SetMaxIdleConns(8)
 
-	return &Postgres{db: db}, nil
+	expireChan := make(chan expireReq, 64)
+	expirys := make(map[string]int64)
+
+	return &Postgres{
+		db:              db,
+		expireChan:      expireChan,
+		expirys:         expirys,
+		expireInterval:  int64(expireInterval),
+		expireThreshold: expireThreshold,
+	}, nil
+}
+
+func (pg *Postgres) Start() {
+	go func() {
+		for req := range pg.expireChan {
+			lastEx, ok := pg.expirys[req.customerId]
+			if !ok {
+				pg.expirys[req.customerId] = req.timestamp
+				continue
+			}
+
+			if req.timestamp-lastEx > pg.expireInterval {
+				go func(req expireReq) {
+					defer pg.expireMut.Unlock()
+					pg.expireEntities(req.customerId, req.timestamp)
+					pg.expireMut.Lock()
+					pg.expirys[req.customerId] = req.timestamp
+				}(req)
+			}
+		}
+	}()
 }
 
 func (pg *Postgres) PutEntity(entity interface{}) (*EntityResponse, error) {
@@ -41,8 +82,14 @@ func (pg *Postgres) PutEntity(entity interface{}) (*EntityResponse, error) {
 	}
 
 	if err == nil {
-		customer := &Customer{Id: customerId, LastSync: time.Now()}
+		lastSync := time.Now()
+		customer := &Customer{Id: customerId, LastSync: lastSync}
 		err = pg.putCustomer(customer)
+		if err != nil {
+			return nil, err
+		}
+
+		pg.expireChan <- expireReq{lastSync.Unix(), customerId}
 	}
 
 	return response, err
@@ -226,6 +273,20 @@ func (pg *Postgres) putGroup(group *Group) error {
 func (pg *Postgres) putCustomer(customer *Customer) error {
 	query := "with update_customers as (update customers set last_sync = :last_sync where id = :id returning id), insert_customers as (insert into customers (id, last_sync) select :id as id, :last_sync as last_sync where not exists (select id from update_customers limit 1) returning id) select * from update_customers union all select * from insert_customers;"
 	_, err := pg.db.NamedExec(query, customer)
+	return err
+}
+
+func (pg *Postgres) expireEntities(customerId string, lastSync int64) error {
+	lastSyncTime := time.Unix(lastSync, 0).Add(time.Duration(-1*pg.expireThreshold) * time.Second)
+	groupExpireQuery := "delete from groups where customer_id = $1 and updated_at < $2"
+	_, err := pg.db.Exec(groupExpireQuery, customerId, lastSyncTime)
+	if err != nil {
+		return err
+	}
+
+	instanceExpireQuery := "delete from instances where customer_id = $1 and updated_at < $2"
+	_, err = pg.db.Exec(instanceExpireQuery, customerId, lastSyncTime)
+
 	return err
 }
 
