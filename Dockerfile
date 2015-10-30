@@ -15,6 +15,7 @@ ENV FIERI_HTTP_ADDR=""
 ENV YELLER_KEY=""
 ENV VAPE_ENDPOINT=""
 ENV SLACK_ENDPOINT=""
+ENV APPENV=""
 
 RUN apk add --update bash ca-certificates curl
 RUN curl -Lo /opt/bin/migrate https://s3-us-west-2.amazonaws.com/opsee-releases/go/migrate/migrate-linux-amd64 && \
