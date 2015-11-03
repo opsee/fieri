@@ -71,6 +71,15 @@ func (suite *TestSuite) TestDbInstances() {
 	time.Sleep(500 * time.Millisecond)
 	instances, _ := suite.Store.ListInstances(&store.InstancesRequest{CustomerId: testCustomerId, Type: "rds"})
 	suite.Equal(len(suite.RdsInstances), len(instances.Instances))
+
+	time.Sleep(4 * time.Second)
+
+	// now trigger expiry
+	publishEvent(suite.Producer, "DBInstance", suite.RdsInstances[0])
+
+	time.Sleep(4 * time.Second)
+	instances, _ = suite.Store.ListInstances(&store.InstancesRequest{CustomerId: testCustomerId, Type: "rds"})
+	suite.Equal(1, len(instances.Instances))
 }
 
 func (suite *TestSuite) TestSecurityGroups() {
@@ -132,7 +141,7 @@ func publishEvent(producer *nsq.Producer, messageType string, message interface{
 }
 
 func setupDb(t *testing.T) store.Store {
-	db, err := store.NewPostgres(os.Getenv("POSTGRES_CONN"), 10, 20)
+	db, err := store.NewPostgres(os.Getenv("POSTGRES_CONN"), 1, 2)
 	if err != nil {
 		t.Fatal(err)
 	}

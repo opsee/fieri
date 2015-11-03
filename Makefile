@@ -9,6 +9,19 @@ clean:
 fmt:
 	@gofmt -w ./
 
+deps:
+	docker pull sameersbn/postgresql:9.4-3
+	@docker rm -f postgresql || true
+	@docker run --name postgresql -d -e PSQL_TRUST_LOCALNET=true -e DB_USER=postgres -e DB_PASS= -e DB_NAME=fieri_test sameersbn/postgresql:9.4-3
+	@echo "started postgresql"
+	docker pull nsqio/nsq:latest
+	@docker rm -f lookupd || true
+	docker run --name lookupd -d nsqio/nsq /nsqlookupd
+	@echo "started lookupd"
+	@docker rm -f nsqd || true
+	@docker run --name nsqd --link lookupd:lookupd -d nsqio/nsq /nsqd --broadcast-address=nsqd --lookupd-tcp-address=lookupd:4160
+	@echo "started nsqd"
+
 migrate:
 	migrate -url $(POSTGRES_CONN) -path ./migrations up
 
