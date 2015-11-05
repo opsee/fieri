@@ -164,11 +164,10 @@ func (pg *Postgres) ListGroups(request *GroupsRequest) (*GroupsResponse, error) 
 
 	var err error
 	groups := make([]*Group, 0)
-
 	if request.Type == "" {
-		err = pg.db.Select(&groups, "select * from groups where customer_id = $1", request.CustomerId)
+		err = pg.db.Select(&groups, "select groups.*, count(groups_instances.instance_id) as instance_count from groups left outer join groups_instances on groups_instances.group_name = groups.name where groups.customer_id = $1 group by groups.name, groups.customer_id", request.CustomerId)
 	} else {
-		err = pg.db.Select(&groups, "select * from groups where customer_id = $1 and type = $2", request.CustomerId, request.Type)
+		err = pg.db.Select(&groups, "select groups.*, count(groups_instances.instance_id) as instance_count from groups left outer join groups_instances on groups_instances.group_name = groups.name where groups.customer_id = $1 and groups.type = $2 group by groups.name, groups.customer_id", request.CustomerId, request.Type)
 	}
 
 	return &GroupsResponse{groups}, err
