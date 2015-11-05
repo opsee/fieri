@@ -3,6 +3,7 @@ package store
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"time"
 )
 
@@ -92,13 +93,14 @@ type Instance struct {
 }
 
 type Group struct {
-	Name       string      `json:"name"`
-	CustomerId string      `json:"customer_id" db:"customer_id"`
-	Type       string      `json:"type"`
-	Data       []byte      `json:"data"`
-	Instances  []*Instance `json:"-" db:""`
-	CreatedAt  time.Time   `json:"created_at" db:"created_at"`
-	UpdatedAt  time.Time   `json:"updated_at" db:"updated_at"`
+	Name          string      `json:"name"`
+	CustomerId    string      `json:"customer_id" db:"customer_id"`
+	Type          string      `json:"type"`
+	Data          []byte      `json:"data"`
+	InstanceCount int         `json:"instance_count" db:"instance_count"`
+	Instances     []*Instance `json:"-" db:""`
+	CreatedAt     time.Time   `json:"created_at" db:"created_at"`
+	UpdatedAt     time.Time   `json:"updated_at" db:"updated_at"`
 }
 
 type InstanceData struct {
@@ -442,5 +444,5 @@ func (i *Instance) MarshalJSON() ([]byte, error) {
 }
 
 func (g *Group) MarshalJSON() ([]byte, error) {
-	return g.Data, nil
+	return []byte(fmt.Sprintf("{\"group\": %s, \"instance_count\": %d}", g.Data, g.InstanceCount)), nil
 }
