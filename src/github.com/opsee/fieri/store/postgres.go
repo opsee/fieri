@@ -163,7 +163,16 @@ func (pg *Postgres) GetGroup(request *GroupRequest) (*GroupResponse, error) {
 	}
 
 	instances, err := pg.listInstances(&InstancesRequest{CustomerId: request.CustomerId, GroupId: request.GroupId, Type: request.Type})
-	return &GroupResponse{group, instances, len(instances)}, err
+	if err != nil {
+		return nil, err
+	}
+
+	iresponses := make([]*InstanceResponse, len(instances))
+	for i, inst := range instances {
+		iresponses[i] = &InstanceResponse{inst}
+	}
+
+	return &GroupResponse{group, iresponses, len(instances)}, err
 }
 
 func (pg *Postgres) ListGroups(request *GroupsRequest) (*GroupsResponse, error) {

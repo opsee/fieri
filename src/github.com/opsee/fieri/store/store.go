@@ -50,9 +50,9 @@ type InstancesResponse struct {
 }
 
 type GroupResponse struct {
-	Group         *Group      `json:"group"`
-	Instances     []*Instance `json:"instances,omitempty"`
-	InstanceCount int         `json:"instance_count"`
+	Group         *Group              `json:"group"`
+	Instances     []*InstanceResponse `json:"instances,omitempty"`
+	InstanceCount int                 `json:"instance_count"`
 }
 
 type GroupsResponse struct {
