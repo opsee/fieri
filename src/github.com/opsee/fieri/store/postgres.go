@@ -21,11 +21,6 @@ type expireReq struct {
 	customerId string
 }
 
-type compositeGroup struct {
-	*Group
-	InstanceCount int `db:"instance_count"`
-}
-
 func NewPostgres(connection string, expireInterval, expireThreshold int) (Store, error) {
 	db, err := sqlx.Open("postgres", connection)
 	if err != nil {
@@ -168,27 +163,27 @@ func (pg *Postgres) ListGroups(request *GroupsRequest) (*GroupsResponse, error) 
 	}
 
 	var err error
-	cgroups := make([]*compositeGroup, 0)
+	groups := make([]*Group, 0)
 
 	if request.Type == "" {
-		err = pg.db.Select(&cgroups, "select groups.*, count(distinct(groups_instances.instance_id)) as instance_count from groups left outer join groups_instances on groups_instances.group_name = groups.name where groups.customer_id = $1 group by groups.name, groups.customer_id", request.CustomerId)
+		err = pg.db.Select(&groups, "select groups.*, count(distinct(groups_instances.instance_id)) as instance_count from groups left outer join groups_instances on groups_instances.group_name = groups.name where groups.customer_id = $1 group by groups.name, groups.customer_id", request.CustomerId)
 	} else {
-		err = pg.db.Select(&cgroups, "select groups.*, count(distinct(groups_instances.instance_id)) as instance_count from groups left outer join groups_instances on groups_instances.group_name = groups.name where groups.customer_id = $1 and groups.type = $2 group by groups.name, groups.customer_id", request.CustomerId, request.Type)
+		err = pg.db.Select(&groups, "select groups.*, count(distinct(groups_instances.instance_id)) as instance_count from groups left outer join groups_instances on groups_instances.group_name = groups.name where groups.customer_id = $1 and groups.type = $2 group by groups.name, groups.customer_id", request.CustomerId, request.Type)
 	}
 
 	if err != nil {
 		return nil, err
 	}
 
-	groups := make([]*GroupResponse, len(cgroups))
-	for i, g := range cgroups {
-		groups[i] = &GroupResponse{
-			Group:         g.Group,
+	grouprs := make([]*GroupResponse, len(groups))
+	for i, g := range groups {
+		grouprs[i] = &GroupResponse{
+			Group:         g,
 			InstanceCount: g.InstanceCount,
 		}
 	}
 
-	return &GroupsResponse{groups}, nil
+	return &GroupsResponse{grouprs}, nil
 }
 
 func (pg *Postgres) CountGroups(request *GroupsRequest) (*CountResponse, error) {
