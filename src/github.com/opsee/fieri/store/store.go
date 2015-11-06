@@ -3,7 +3,6 @@ package store
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"time"
 )
 
@@ -51,12 +50,13 @@ type InstancesResponse struct {
 }
 
 type GroupResponse struct {
-	Group     *Group      `json:"group"`
-	Instances []*Instance `json:"instances"`
+	Group         *Group      `json:"group"`
+	Instances     []*Instance `json:"instances,omitempty"`
+	InstanceCount int         `json:"instance_count"`
 }
 
 type GroupsResponse struct {
-	Groups []*Group `json:"groups"`
+	Groups []*GroupResponse `json:"groups"`
 }
 
 type CustomerRequest struct {
@@ -444,5 +444,5 @@ func (i *Instance) MarshalJSON() ([]byte, error) {
 }
 
 func (g *Group) MarshalJSON() ([]byte, error) {
-	return []byte(fmt.Sprintf("{\"group\": %s, \"instance_count\": %d}", g.Data, g.InstanceCount)), nil
+	return g.Data, nil
 }
