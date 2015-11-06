@@ -46,7 +46,7 @@ type InstanceResponse struct {
 }
 
 type InstancesResponse struct {
-	Instances []*Instance `json:"instances"`
+	Instances []*InstanceResponse `json:"instances"`
 }
 
 type GroupResponse struct {

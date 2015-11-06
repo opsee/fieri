@@ -113,7 +113,16 @@ func (pg *Postgres) GetInstance(request *InstanceRequest) (*InstanceResponse, er
 
 func (pg *Postgres) ListInstances(request *InstancesRequest) (*InstancesResponse, error) {
 	instances, err := pg.listInstances(request)
-	return &InstancesResponse{instances}, err
+	if err != nil {
+		return nil, err
+	}
+
+	responses := make([]*InstanceResponse, len(instances))
+	for i, inst := range instances {
+		responses[i] = &InstanceResponse{inst}
+	}
+
+	return &InstancesResponse{responses}, err
 }
 
 func (pg *Postgres) CountInstances(request *InstancesRequest) (*CountResponse, error) {
