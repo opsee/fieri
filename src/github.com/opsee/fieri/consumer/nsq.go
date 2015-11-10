@@ -6,6 +6,7 @@ import (
 	kvlog "github.com/go-kit/kit/log"
 	"github.com/nsqio/go-nsq"
 	"github.com/opsee/fieri/store"
+	"github.com/yeller/yeller-golang"
 	"time"
 )
 
@@ -55,14 +56,26 @@ func (h *nsqHandler) HandleMessage(m *nsq.Message) error {
 	event := &Event{}
 	err := json.Unmarshal(m.Body, event)
 	if err != nil {
-		return err
+		h.handleError(m, err)
+		return nil
 	}
 
 	entity, err := store.NewEntity(event.MessageType, event.CustomerId, []byte(event.MessageBody))
 	if err != nil {
-		return err
+		h.handleError(m, err)
+		return nil
 	}
 
 	_, err = h.db.PutEntity(entity)
-	return err
+	if err != nil {
+		h.handleError(m, err)
+		return nil
+	}
+
+	return nil
+}
+
+func (h *nsqHandler) handleError(m *nsq.Message, err error) {
+	h.logger.Log("nsq consumer error", err.Error())
+	yeller.NotifyInfo(err, map[string]interface{}{"nsq_message": m})
 }
