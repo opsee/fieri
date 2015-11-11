@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"github.com/hoisie/mustache"
 	slacktmpl "github.com/opsee/notification-templates/dist/go/slack"
 	"net/http"
@@ -69,7 +70,15 @@ func (n *notifier) NotifyError(request *OnboardRequest) error {
 }
 
 func (n *notifier) notifyEmail(request *OnboardRequest, template string) error {
+	logger := log.WithFields(log.Fields{
+		"user-id":     request.UserId,
+		"customer-id": request.CustomerId,
+		"template":    template,
+	})
+	logger.Info("requested email notification")
+
 	if n.vapeEndpoint == "" {
+		logger.Warn("not sending email notification since VAPE_ENDPOINT is not set")
 		return nil
 	}
 
@@ -89,6 +98,8 @@ func (n *notifier) notifyEmail(request *OnboardRequest, template string) error {
 	}
 
 	defer resp.Body.Close()
+	logger.WithField("status", resp.StatusCode).Info("sent vape request")
+
 	if resp.StatusCode > 299 {
 		return fmt.Errorf("Bad response from Vape notification endpoint: %s", resp.Status)
 	}
@@ -101,16 +112,25 @@ func (n *notifier) notifyEmail(request *OnboardRequest, template string) error {
 		return err
 	}
 
-	_, ok := response["user"]
+	user, ok := response["user"]
 	if !ok {
 		return fmt.Errorf("error response from vape")
 	}
+
+	logger.WithField("user", user).Info("user response from vape")
 
 	return nil
 }
 
 func (n *notifier) notifySlack(request *OnboardRequest, template *mustache.Template) error {
+	logger := log.WithFields(log.Fields{
+		"user-id":     request.UserId,
+		"customer-id": request.CustomerId,
+	})
+	logger.Info("requested slack notification")
+
 	if n.slackEndpoint == "" {
+		logger.Warn("not sending slack notification since SLACK_ENDPOINT is not set")
 		return nil
 	}
 
@@ -133,5 +153,7 @@ func (n *notifier) notifySlack(request *OnboardRequest, template *mustache.Templ
 	}
 
 	defer resp.Body.Close()
+	logger.WithField("status", resp.StatusCode).Info("sent slack request")
+
 	return nil
 }

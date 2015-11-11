@@ -157,6 +157,8 @@ func (o *onboarder) scan(request *OnboardRequest) {
 	if err != nil {
 		o.handleError(err, request)
 	}
+
+	logger.Info("finished customer discovery")
 }
 
 func (o *onboarder) handleError(err error, request *OnboardRequest) {
