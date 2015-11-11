@@ -75,7 +75,7 @@ func (s *service) wrapHandler(ctx context.Context, decoder decodeFunc, handler h
 				"path":        r.URL.RequestURI(),
 				"method":      r.Method,
 				"customer-id": r.Header.Get("Customer-Id"),
-			}).Info("request ok")
+			}).Info("http request")
 
 		case <-ctx.Done():
 			msg, _ := encodeResponse(MessageResponse{"Backend service unavailable."})

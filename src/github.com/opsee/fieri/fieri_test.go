@@ -144,7 +144,7 @@ func setupDb(t *testing.T) store.Store {
 	if err != nil {
 		t.Fatal(err)
 	}
-	db.Start()
+	go db.Start()
 	return db
 }
 

@@ -1,6 +1,7 @@
 package store
 
 import (
+	log "github.com/Sirupsen/logrus"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"sync"
@@ -29,39 +30,47 @@ func NewPostgres(connection string, expireInterval, expireThreshold int) (Store,
 	db.SetMaxOpenConns(64)
 	db.SetMaxIdleConns(8)
 
-	expireChan := make(chan expireReq, 64)
-	expirys := make(map[string]int64)
-
 	return &Postgres{
 		db:              db,
-		expireChan:      expireChan,
-		expirys:         expirys,
+		expireChan:      make(chan expireReq),
+		expirys:         make(map[string]int64),
 		expireInterval:  int64(expireInterval),
 		expireThreshold: expireThreshold,
+		expireMut:       &sync.Mutex{},
 	}, nil
 }
 
 func (pg *Postgres) Start() {
-	go func() {
-		for req := range pg.expireChan {
-			lastEx, ok := pg.expirys[req.customerId]
-			if !ok {
-				pg.expirys[req.customerId] = req.timestamp
-				continue
-			}
+	log.Info("starting db expiry channel")
 
-			if req.timestamp-lastEx > pg.expireInterval {
-				go func(req expireReq) {
-					err := pg.expireEntities(req.customerId, req.timestamp)
-					if err != nil {
-						pg.expireMut.Lock()
-						defer pg.expireMut.Unlock()
-						pg.expirys[req.customerId] = req.timestamp
-					}
-				}(req)
-			}
+	for req := range pg.expireChan {
+		lastEx, ok := pg.expirys[req.customerId]
+		if !ok {
+			pg.expirys[req.customerId] = req.timestamp
+			continue
 		}
-	}()
+
+		if req.timestamp-lastEx > pg.expireInterval {
+			go func(req expireReq) {
+				logger := log.WithFields(log.Fields{
+					"customer-id": req.customerId,
+					"timestamp":   req.timestamp,
+				})
+
+				err := pg.expireEntities(req.customerId, req.timestamp)
+				if err != nil {
+					logger.WithError(err).Error("error expiring entities")
+					return
+				}
+
+				logger.Info("expiring entities")
+
+				pg.expireMut.Lock()
+				defer pg.expireMut.Unlock()
+				pg.expirys[req.customerId] = req.timestamp
+			}(req)
+		}
+	}
 }
 
 func (pg *Postgres) PutEntity(entity interface{}) (*EntityResponse, error) {
