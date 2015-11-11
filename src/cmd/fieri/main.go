@@ -65,13 +65,12 @@ func main() {
 	}
 
 	service := service.NewService(db, onboarder)
-	service.StartHTTP(addr)
-
-	db.Start()
+	go service.StartHTTP(addr)
+	go db.Start()
 
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, os.Kill)
 	<-interrupt
 
-	log.Fatal(nsqConsumer.Stop())
+	nsqConsumer.Stop()
 }

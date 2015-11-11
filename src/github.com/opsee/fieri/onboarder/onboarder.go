@@ -139,7 +139,7 @@ func (o *onboarder) scan(request *OnboardRequest) {
 				request.LoadBalancerCount++
 			}
 
-			logger.WithField("resource-type", messageType).Info("customer resource discovered")
+			logger.WithField("resource-type", messageType).Info("resource discovery")
 		}
 	}
 
@@ -158,7 +158,7 @@ func (o *onboarder) scan(request *OnboardRequest) {
 		o.handleError(err, request)
 	}
 
-	logger.Info("finished customer discovery")
+	logger.Info("discovery complete")
 }
 
 func (o *onboarder) handleError(err error, request *OnboardRequest) {

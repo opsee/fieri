@@ -151,7 +151,7 @@
 		{
 			"importpath": "github.com/opsee/awscan",
 			"repository": "https://github.com/opsee/awscan",
-			"revision": "fbc1059fb2e4a8ec5e6bb0942aba8863b571c636",
+			"revision": "183b843c09ad635d51eb8926fc2d33f63f119baa",
 			"branch": "master"
 		},
 		{
