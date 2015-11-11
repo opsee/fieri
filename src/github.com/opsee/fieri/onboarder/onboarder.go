@@ -3,7 +3,7 @@ package onboarder
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/go-kit/kit/log"
+	log "github.com/Sirupsen/logrus"
 	"github.com/opsee/awscan"
 	"github.com/opsee/fieri/store"
 	"github.com/satori/go.uuid"
@@ -47,7 +47,6 @@ type OnboardResponse struct {
 
 type onboarder struct {
 	db       store.Store
-	logger   log.Logger
 	notifier Notifier
 }
 
@@ -55,10 +54,9 @@ const (
 	instanceErrorThreshold = 0.3
 )
 
-func NewOnboarder(db store.Store, logger log.Logger, notifier Notifier) *onboarder {
+func NewOnboarder(db store.Store, notifier Notifier) *onboarder {
 	return &onboarder{
 		db:       db,
-		logger:   log.NewContext(logger).With("onboarding", true),
 		notifier: notifier,
 	}
 }
@@ -73,8 +71,13 @@ func (o *onboarder) scan(request *OnboardRequest) {
 	var (
 		err       error
 		instances = make(map[string]bool)
-		logger    = log.NewContext(o.logger).With("scan-request-id", request.RequestId)
-		disco     = awscan.NewDiscoverer(
+		logger    = log.WithFields(log.Fields{
+			"request-id":  request.RequestId,
+			"customer-id": request.CustomerId,
+			"region":      request.Region,
+			"user-id":     request.UserId,
+		})
+		disco = awscan.NewDiscoverer(
 			awscan.NewScanner(
 				&awscan.Config{
 					AccessKeyId: request.AccessKey,
@@ -136,7 +139,7 @@ func (o *onboarder) scan(request *OnboardRequest) {
 				request.LoadBalancerCount++
 			}
 
-			logger.Log("resource-type", messageType)
+			logger.WithField("resource-type", messageType).Info("customer resource discovered")
 		}
 	}
 
@@ -158,7 +161,7 @@ func (o *onboarder) scan(request *OnboardRequest) {
 
 func (o *onboarder) handleError(err error, request *OnboardRequest) {
 	request.LastError = err.Error()
-	log.NewContext(o.logger).With("scan-request-id", request.RequestId).Log("error", err.Error())
+	log.WithField("scan-request-id", request.RequestId).WithError(err).Error("onboarding error")
 	yeller.NotifyInfo(err, map[string]interface{}{"onboard_request": request})
 }
 

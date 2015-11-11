@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/json"
 	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"github.com/julienschmidt/httprouter"
 	"github.com/opsee/fieri/onboarder"
 	"github.com/opsee/fieri/store"
@@ -43,7 +44,7 @@ func (s *service) wrapHandler(ctx context.Context, decoder decodeFunc, handler h
 
 		req, err := decoder(r, params)
 		if err != nil {
-			s.renderBadRequest(rw, err)
+			s.renderBadRequest(rw, r, err)
 			return
 		}
 
@@ -57,18 +58,24 @@ func (s *service) wrapHandler(ctx context.Context, decoder decodeFunc, handler h
 		select {
 		case rf := <-forwardChan:
 			if rf.err != nil {
-				s.renderServerError(rw, rf.err)
+				s.renderServerError(rw, r, rf.err)
 				return
 			}
 
 			encodedResponse, err := encodeResponse(rf.response)
 			if err != nil {
-				s.renderServerError(rw, err)
+				s.renderServerError(rw, r, err)
 				return
 			}
 
 			rw.WriteHeader(rf.status)
 			rw.Write(encodedResponse)
+			log.WithFields(log.Fields{
+				"status":      rf.status,
+				"path":        r.URL.RequestURI(),
+				"method":      r.Method,
+				"customer-id": r.Header.Get("Customer-Id"),
+			}).Info("request ok")
 
 		case <-ctx.Done():
 			msg, _ := encodeResponse(MessageResponse{"Backend service unavailable."})
@@ -256,19 +263,19 @@ func (s *service) customerHandler(ctx context.Context, request interface{}) (int
 func (s *service) makePanicHandler() panicFunc {
 	return func(rw http.ResponseWriter, r *http.Request, data interface{}) {
 		yeller.NotifyPanic(data)
-		s.renderServerError(rw, data)
+		s.renderServerError(rw, r, fmt.Errorf("panic data: %#v", data))
 	}
 }
 
-func (s *service) renderServerError(rw http.ResponseWriter, err interface{}) {
-	s.logger.Log("error", err)
+func (s *service) renderServerError(rw http.ResponseWriter, r *http.Request, err error) {
+	log.WithError(err).WithField("request", *r).Error("internal server error")
 	msg, _ := encodeResponse(MessageResponse{"An unexpected error happened."})
 	rw.WriteHeader(http.StatusInternalServerError)
 	rw.Write(msg)
 }
 
-func (s *service) renderBadRequest(rw http.ResponseWriter, err interface{}) {
-	s.logger.Log("bad-request", err)
+func (s *service) renderBadRequest(rw http.ResponseWriter, r *http.Request, err error) {
+	log.WithError(err).WithField("request", *r).Error("bad request")
 	msg, _ := encodeResponse(MessageResponse{fmt.Sprint("Bad request: ", err)})
 	rw.WriteHeader(http.StatusBadRequest)
 	rw.Write(msg)

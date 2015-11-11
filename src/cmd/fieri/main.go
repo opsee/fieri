@@ -1,14 +1,13 @@
 package main
 
 import (
-	kvlog "github.com/go-kit/kit/log"
+	log "github.com/Sirupsen/logrus"
 
 	"github.com/opsee/fieri/consumer"
 	"github.com/opsee/fieri/onboarder"
 	"github.com/opsee/fieri/service"
 	"github.com/opsee/fieri/store"
 	"github.com/yeller/yeller-golang"
-	"log"
 	"os"
 	"os/signal"
 	"strconv"
@@ -16,7 +15,6 @@ import (
 )
 
 func main() {
-	kvlogger := kvlog.NewLogfmtLogger(os.Stdout)
 	yeller.StartWithErrorHandlerEnvApplicationRoot(os.Getenv("YELLER_KEY"), "production", "/build/src/github.com/opsee/fieri", yeller.NewSilentErrorHandler())
 
 	pgConnection := os.Getenv("POSTGRES_CONN")
@@ -46,7 +44,7 @@ func main() {
 	}
 
 	lookupds := strings.Split(lookupdHosts, ",")
-	nsqConsumer, err := consumer.NewNsq(lookupds, db, kvlogger, concurrency, bastionDiscoveryTopic)
+	nsqConsumer, err := consumer.NewNsq(lookupds, db, concurrency, bastionDiscoveryTopic)
 	if err != nil {
 		log.Fatal("Error initializing nsq consumer:", err)
 	}
@@ -59,14 +57,14 @@ func main() {
 	if slackEndpoint == "" {
 		log.Println("WARN: SLACK_ENDPOINT was not set, so we're not using slack for notifications.")
 	}
-	onboarder := onboarder.NewOnboarder(db, kvlogger, onboarder.NewNotifier(vapeEndpoint, slackEndpoint))
+	onboarder := onboarder.NewOnboarder(db, onboarder.NewNotifier(vapeEndpoint, slackEndpoint))
 
 	addr := os.Getenv("FIERI_HTTP_ADDR")
 	if addr == "" {
 		log.Fatal("You have to give me a listening address by setting the FIERI_HTTP_ADDR env var")
 	}
 
-	service := service.NewService(db, onboarder, kvlogger)
+	service := service.NewService(db, onboarder)
 	service.StartHTTP(addr)
 
 	db.Start()

@@ -6,7 +6,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/elb"
 	"github.com/aws/aws-sdk-go/service/rds"
-	kvlog "github.com/go-kit/kit/log"
 	"github.com/nsqio/go-nsq"
 	"github.com/opsee/fieri/consumer"
 	"github.com/opsee/fieri/store"
@@ -151,7 +150,7 @@ func setupDb(t *testing.T) store.Store {
 
 func setupConsumer(suite *TestSuite) {
 	if suite.Consumer == nil {
-		nsq, err := consumer.NewNsq(strings.Split(os.Getenv("LOOKUPD_HOSTS"), ","), suite.Store, kvlog.NewLogfmtLogger(os.Stdout), 1, testTopic)
+		nsq, err := consumer.NewNsq(strings.Split(os.Getenv("LOOKUPD_HOSTS"), ","), suite.Store, 1, testTopic)
 		if err != nil {
 			suite.T().Fatal(err)
 		}
