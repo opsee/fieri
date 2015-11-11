@@ -3,7 +3,7 @@ package consumer
 import (
 	"encoding/json"
 	"fmt"
-	kvlog "github.com/go-kit/kit/log"
+	log "github.com/Sirupsen/logrus"
 	"github.com/nsqio/go-nsq"
 	"github.com/opsee/fieri/store"
 	"github.com/yeller/yeller-golang"
@@ -15,22 +15,17 @@ type Nsq struct {
 }
 
 type nsqHandler struct {
-	logger kvlog.Logger
-	db     store.Store
+	db store.Store
 }
 
-func NewNsq(lookupds []string, db store.Store, kvlogger kvlog.Logger, concurrency int, topic string) (Consumer, error) {
+func NewNsq(lookupds []string, db store.Store, concurrency int, topic string) (Consumer, error) {
 	config := nsq.NewConfig()
 	consumer, err := nsq.NewConsumer(topic, Channel, config)
 	if err != nil {
 		return nil, err
 	}
 
-	if kvlogger == nil {
-		kvlogger = kvlog.NewNopLogger()
-	}
-
-	handler := &nsqHandler{logger: kvlogger, db: db}
+	handler := &nsqHandler{db: db}
 	consumer.AddConcurrentHandlers(handler, concurrency)
 	consumer.ConnectToNSQLookupds(lookupds)
 
@@ -76,6 +71,6 @@ func (h *nsqHandler) HandleMessage(m *nsq.Message) error {
 }
 
 func (h *nsqHandler) handleError(m *nsq.Message, err error) {
-	h.logger.Log("nsq consumer error", err.Error())
-	yeller.NotifyInfo(err, map[string]interface{}{"nsq_message": m})
+	log.WithFields(log.Fields{"err": err.Error(), "message": m}).Warn("error processing nsq message")
+	yeller.NotifyInfo(err, map[string]interface{}{"message": m})
 }

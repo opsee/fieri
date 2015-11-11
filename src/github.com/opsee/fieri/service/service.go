@@ -2,7 +2,6 @@ package service
 
 import (
 	"errors"
-	"github.com/go-kit/kit/log"
 	"github.com/opsee/fieri/onboarder"
 	"github.com/opsee/fieri/store"
 	"time"
@@ -16,7 +15,6 @@ type Service interface {
 type service struct {
 	store.Store
 	onboarder.Onboarder
-	logger log.Logger
 }
 
 type MessageResponse struct {
@@ -44,6 +42,6 @@ var (
 	errMissingUserId        = errors.New("missing user_id.")
 )
 
-func NewService(store store.Store, onboarder onboarder.Onboarder, logger log.Logger) *service {
-	return &service{store, onboarder, logger}
+func NewService(store store.Store, onboarder onboarder.Onboarder) *service {
+	return &service{store, onboarder}
 }
