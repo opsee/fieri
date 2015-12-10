@@ -104,22 +104,21 @@ type Group struct {
 }
 
 type InstanceData struct {
-	Monitoring         map[string]interface{}
-	PublicDnsName      string
-	LaunchTime         time.Time
-	PublicIpAddress    string
-	PrivateIpAddress   string
-	InstanceId         string
-	ImageId            string
-	PrivateDnsName     string
-	KeyName            string
-	SecurityGroups     []map[string]interface{}
-	SubnetId           string
-	InstanceType       string
-	Placement          map[string]interface{}
-	IamInstanceProfile map[string]interface{}
-	Tags               []map[string]interface{}
-	AmiLaunchIndex     int
+	State            map[string]interface{}
+	Monitoring       map[string]interface{}
+	PublicDnsName    string
+	LaunchTime       time.Time
+	PublicIpAddress  string
+	PrivateIpAddress string
+	InstanceId       string
+	ImageId          string
+	PrivateDnsName   string
+	KeyName          string
+	SecurityGroups   []map[string]interface{}
+	SubnetId         string
+	InstanceType     string
+	Placement        map[string]interface{}
+	Tags             []map[string]interface{}
 }
 
 type DBInstanceData struct {
