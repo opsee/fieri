@@ -147,6 +147,7 @@ func decodeEntityRequest(r *http.Request, params httprouter.Params) (interface{}
 
 	entity, err := store.NewEntity(params.ByName("type"), r.Header.Get("Customer-Id"), body)
 	if err != nil {
+		log.WithError(err).WithField("body", string(body)).Error("failed decoding entity")
 		return nil, errMalformedRequestBody
 	}
 
