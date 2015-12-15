@@ -71,6 +71,6 @@ func (h *nsqHandler) HandleMessage(m *nsq.Message) error {
 }
 
 func (h *nsqHandler) handleError(m *nsq.Message, err error) {
-	log.WithFields(log.Fields{"err": err.Error(), "message": m}).Warn("error processing nsq message")
-	yeller.NotifyInfo(err, map[string]interface{}{"message": m})
+	log.WithFields(log.Fields{"err": err.Error(), "message": string(m.Body)}).Warn("error processing nsq message")
+	yeller.NotifyInfo(err, map[string]interface{}{"message": string(m.Body)})
 }

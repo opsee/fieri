@@ -103,6 +103,22 @@ type Group struct {
 	UpdatedAt     time.Time   `json:"updated_at" db:"updated_at"`
 }
 
+type RouteTable struct {
+	Id         string    `json:"id"`
+	CustomerId string    `json:"customer_id" db:"customer_id"`
+	Data       []byte    `json:"data"`
+	CreatedAt  time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at" db:"updated_at"`
+}
+
+type Subnet struct {
+	Id         string    `json:"id"`
+	CustomerId string    `json:"customer_id" db:"customer_id"`
+	Data       []byte    `json:"data"`
+	CreatedAt  time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at" db:"updated_at"`
+}
+
 type InstanceData struct {
 	State            map[string]interface{}
 	Monitoring       map[string]interface{}
@@ -201,6 +217,27 @@ type ELBData struct {
 	SourceSecurityGroup       map[string]interface{}
 }
 
+type RouteTableData struct {
+	Associations    []map[string]interface{}
+	RouteTableId    string
+	VpcId           string
+	Tags            []map[string]interface{}
+	Routes          []map[string]interface{}
+	PropagatingVgws []map[string]interface{}
+}
+
+type SubnetData struct {
+	VpcId                   string
+	Tags                    []map[string]interface{}
+	CidrBlock               string
+	MapPublicIpOnLaunch     bool
+	DefaultForAz            bool
+	State                   string
+	AvailabilityZone        string
+	SubnetId                string
+	AvailableIpAddressCount int
+}
+
 const (
 	InstanceEntityType         = "Instance"
 	DBInstanceEntityType       = "DBInstance"
@@ -208,6 +245,8 @@ const (
 	DBSecurityGroupEntityType  = "DBSecurityGroup"
 	AutoScalingGroupEntityType = "AutoScalingGroup"
 	ELBEntityType              = "LoadBalancerDescription"
+	RouteTableEntityType       = "RouteTable"
+	SubnetEntityType           = "Subnet"
 
 	InstanceStoreType         = "ec2"
 	DBInstanceStoreType       = "rds"
@@ -218,11 +257,13 @@ const (
 )
 
 var (
-	ErrMissingInstanceId = errors.New("must provide instance id")
-	ErrMissingGroupId    = errors.New("must provide group id")
-	ErrMissingCustomerId = errors.New("must provide customer id")
-	ErrMissingType       = errors.New("must provide type")
-	ErrMissingBody       = errors.New("must provide body")
+	ErrMissingInstanceId   = errors.New("must provide instance id")
+	ErrMissingGroupId      = errors.New("must provide group id")
+	ErrMissingRouteTableId = errors.New("must provide route table id")
+	ErrMissingSubnetId     = errors.New("must provide subnet id")
+	ErrMissingCustomerId   = errors.New("must provide customer id")
+	ErrMissingType         = errors.New("must provide type")
+	ErrMissingBody         = errors.New("must provide body")
 )
 
 func NewEntity(entityType, customerId string, blob []byte) (interface{}, error) {
@@ -298,6 +339,30 @@ func NewEntity(entityType, customerId string, blob []byte) (interface{}, error) 
 			break
 		}
 		entity = NewGroup(customerId, autoscalingData)
+
+	case RouteTableEntityType:
+		routeTableData := &RouteTableData{}
+		if err = json.Unmarshal(blob, routeTableData); err != nil {
+			break
+		}
+
+		if routeTableData.RouteTableId == "" {
+			err = ErrMissingRouteTableId
+			break
+		}
+		entity = NewRouteTable(customerId, routeTableData)
+
+	case SubnetEntityType:
+		subnetData := &SubnetData{}
+		if err = json.Unmarshal(blob, subnetData); err != nil {
+			break
+		}
+
+		if subnetData.SubnetId == "" {
+			err = ErrMissingSubnetId
+			break
+		}
+		entity = NewSubnet(customerId, subnetData)
 	}
 
 	return entity, err
@@ -436,6 +501,26 @@ func NewGroup(customerId string, groupData interface{}) *Group {
 
 	}
 	return group
+}
+
+func NewRouteTable(customerId string, routeTableData *RouteTableData) *RouteTable {
+	jsonD, _ := json.Marshal(routeTableData)
+
+	return &RouteTable{
+		Id:         routeTableData.RouteTableId,
+		CustomerId: customerId,
+		Data:       jsonD,
+	}
+}
+
+func NewSubnet(customerId string, subnetData *SubnetData) *Subnet {
+	jsonD, _ := json.Marshal(subnetData)
+
+	return &Subnet{
+		Id:         subnetData.SubnetId,
+		CustomerId: customerId,
+		Data:       jsonD,
+	}
 }
 
 func (i *Instance) MarshalJSON() ([]byte, error) {

@@ -1,0 +1,52 @@
+{
+    "Subnets": [
+        {
+            "VpcId": "vpc-b5f3a4d0", 
+            "Tags": [
+                {
+                    "Value": "subnet-us-west-2c", 
+                    "Key": "Name"
+                }
+            ], 
+            "CidrBlock": "172.30.32.0/20", 
+            "MapPublicIpOnLaunch": false, 
+            "DefaultForAz": false, 
+            "State": "available", 
+            "AvailabilityZone": "us-west-2c", 
+            "SubnetId": "subnet-b233aeeb", 
+            "AvailableIpAddressCount": 4077
+        }, 
+        {
+            "VpcId": "vpc-b5f3a4d0", 
+            "Tags": [
+                {
+                    "Value": "subnet-us-west-2b", 
+                    "Key": "Name"
+                }
+            ], 
+            "CidrBlock": "172.30.16.0/20", 
+            "MapPublicIpOnLaunch": false, 
+            "DefaultForAz": false, 
+            "State": "available", 
+            "AvailabilityZone": "us-west-2b", 
+            "SubnetId": "subnet-58f9dd3d", 
+            "AvailableIpAddressCount": 4081
+        }, 
+        {
+            "VpcId": "vpc-b5f3a4d0", 
+            "Tags": [
+                {
+                    "Value": "subnet-us-west-2a", 
+                    "Key": "Name"
+                }
+            ], 
+            "CidrBlock": "172.30.0.0/20", 
+            "MapPublicIpOnLaunch": false, 
+            "DefaultForAz": false, 
+            "State": "available", 
+            "AvailabilityZone": "us-west-2a", 
+            "SubnetId": "subnet-50760c27", 
+            "AvailableIpAddressCount": 4074
+        }
+    ]
+}

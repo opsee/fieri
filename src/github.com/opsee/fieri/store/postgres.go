@@ -90,6 +90,16 @@ func (pg *Postgres) PutEntity(entity interface{}) (*EntityResponse, error) {
 		err = pg.putGroup(entity.(*Group))
 		response = &EntityResponse{entity}
 		customerId = entity.(*Group).CustomerId
+
+	case *RouteTable:
+		err = pg.putRouteTable(entity.(*RouteTable))
+		response = &EntityResponse{entity}
+		customerId = entity.(*RouteTable).CustomerId
+
+	case *Subnet:
+		err = pg.putSubnet(entity.(*Subnet))
+		response = &EntityResponse{entity}
+		customerId = entity.(*Subnet).CustomerId
 	}
 
 	if err == nil {
@@ -314,6 +324,28 @@ func (pg *Postgres) putGroup(group *Group) error {
 func (pg *Postgres) putCustomer(customer *Customer) error {
 	query := "with update_customers as (update customers set last_sync = :last_sync where id = :id returning id), insert_customers as (insert into customers (id, last_sync) select :id as id, :last_sync as last_sync where not exists (select id from update_customers limit 1) returning id) select * from update_customers union all select * from insert_customers;"
 	_, err := pg.db.NamedExec(query, customer)
+	return err
+}
+
+func (pg *Postgres) putRouteTable(routeTable *RouteTable) error {
+	query := `with update_route_tables as
+		  (update route_tables set data = :data where customer_id = :customer_id and id = :id returning id),
+		  insert_route_tables as (insert into route_tables (id, customer_id, data) select :id as id,
+		  :customer_id as customer_id, :data as data where not exists (select id from update_route_tables limit 1) returning id)
+		  select * from update_route_tables union all select * from insert_route_tables;
+		  `
+	_, err := pg.db.NamedExec(query, routeTable)
+	return err
+}
+
+func (pg *Postgres) putSubnet(subnet *Subnet) error {
+	query := `with update_subnets as
+		  (update subnets set data = :data where customer_id = :customer_id and id = :id returning id),
+		  insert_subnets as (insert into subnets (id, customer_id, data) select :id as id,
+		  :customer_id as customer_id, :data as data where not exists (select id from update_subnets limit 1) returning id)
+		  select * from update_subnets union all select * from insert_subnets;
+		  `
+	_, err := pg.db.NamedExec(query, subnet)
 	return err
 }
 
