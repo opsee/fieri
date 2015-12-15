@@ -1,0 +1,52 @@
+{
+    "RouteTables": [
+        {
+            "Associations": [
+                {
+                    "RouteTableAssociationId": "rtbassoc-c67343a3", 
+                    "Main": true, 
+                    "RouteTableId": "rtb-f0085195"
+                }
+            ], 
+            "RouteTableId": "rtb-f0085195", 
+            "VpcId": "vpc-b5f3a4d0", 
+            "PropagatingVgws": [], 
+            "Tags": [
+                {
+                    "Value": "production", 
+                    "Key": "Name"
+                }
+            ], 
+            "Routes": [
+                {
+                    "Origin": "CreateRoute", 
+                    "DestinationCidrBlock": "10.100.255.0/24", 
+                    "InstanceId": "i-80bc5759", 
+                    "NetworkInterfaceId": "eni-ca46c882", 
+                    "State": "active", 
+                    "InstanceOwnerId": "933693344490"
+                }, 
+                {
+                    "Origin": "CreateRoute", 
+                    "DestinationCidrBlock": "10.0.3.0/24", 
+                    "InstanceId": "i-1b49b1c2", 
+                    "NetworkInterfaceId": "eni-a6108dee", 
+                    "State": "active", 
+                    "InstanceOwnerId": "933693344490"
+                }, 
+                {
+                    "GatewayId": "local", 
+                    "DestinationCidrBlock": "172.30.0.0/16", 
+                    "State": "active", 
+                    "Origin": "CreateRouteTable"
+                }, 
+                {
+                    "GatewayId": "igw-8e76e7eb", 
+                    "DestinationCidrBlock": "0.0.0.0/0", 
+                    "State": "active", 
+                    "Origin": "CreateRoute"
+                }
+            ]
+        }
+    ]
+}

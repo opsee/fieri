@@ -30,6 +30,8 @@ type TestSuite struct {
 	RdsInstances      []*rds.DBInstance
 	RdsSecurityGroups []*rds.DBSecurityGroup
 	AutoScalingGroups []*autoscaling.Group
+	RouteTables       []*ec2.RouteTable
+	Subnets           []*ec2.Subnet
 }
 
 func (suite *TestSuite) SetupSuite() {
@@ -43,6 +45,8 @@ func (suite *TestSuite) SetupSuite() {
 	suite.RdsInstances = loadRdsInstances(t)
 	suite.RdsSecurityGroups = loadRdsSecurityGroups(t)
 	suite.AutoScalingGroups = loadAutoScalingGroups(t)
+	suite.RouteTables = loadRouteTables(t)
+	suite.Subnets = loadSubnets(t)
 }
 
 func (suite *TestSuite) TearDownSuite() {
@@ -120,6 +124,26 @@ func (suite *TestSuite) TestDbSecurityGroups() {
 	time.Sleep(500 * time.Millisecond)
 	groups, _ := suite.Store.ListGroups(&store.GroupsRequest{CustomerId: testCustomerId, Type: "rds-security"})
 	suite.Equal(len(suite.RdsSecurityGroups), len(groups.Groups))
+}
+
+func (suite *TestSuite) TestRouteTables() {
+	for _, rt := range suite.RouteTables {
+		publishEvent(suite.Producer, "RouteTable", rt)
+	}
+	setupConsumer(suite)
+	// time.Sleep(500 * time.Millisecond)
+	// groups, _ := suite.Store.ListGroups(&store.GroupsRequest{CustomerId: testCustomerId, Type: "rds-security"})
+	// suite.Equal(len(suite.RdsSecurityGroups), len(groups.Groups))
+}
+
+func (suite *TestSuite) TestSubnets() {
+	for _, subnet := range suite.Subnets {
+		publishEvent(suite.Producer, "Subnet", subnet)
+	}
+	setupConsumer(suite)
+	// time.Sleep(500 * time.Millisecond)
+	// groups, _ := suite.Store.ListGroups(&store.GroupsRequest{CustomerId: testCustomerId, Type: "rds-security"})
+	// suite.Equal(len(suite.RdsSecurityGroups), len(groups.Groups))
 }
 
 func TestTestSuite(t *testing.T) {
@@ -236,6 +260,32 @@ func loadSecurityGroups(t *testing.T) []*ec2.SecurityGroup {
 	}
 
 	return securityGroupsJson.SecurityGroups
+}
+
+func loadRouteTables(t *testing.T) []*ec2.RouteTable {
+	var routeTablesJson struct {
+		RouteTables []*ec2.RouteTable
+	}
+
+	err := readJson("fixtures/route-tables.json", &routeTablesJson)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return routeTablesJson.RouteTables
+}
+
+func loadSubnets(t *testing.T) []*ec2.Subnet {
+	var subnetsJson struct {
+		Subnets []*ec2.Subnet
+	}
+
+	err := readJson("fixtures/subnets.json", &subnetsJson)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return subnetsJson.Subnets
 }
 
 func loadInstances(t *testing.T) []*ec2.Instance {
