@@ -123,7 +123,7 @@ type InstanceData struct {
 	State            map[string]interface{}
 	Monitoring       map[string]interface{}
 	PublicDnsName    string
-	LaunchTime       time.Time
+	LaunchTime       *time.Time
 	PublicIpAddress  string
 	PrivateIpAddress string
 	InstanceId       string
@@ -140,11 +140,11 @@ type InstanceData struct {
 type DBInstanceData struct {
 	PubliclyAccessible               bool
 	VpcSecurityGroups                []map[string]interface{}
-	InstanceCreateTime               time.Time
+	InstanceCreateTime               *time.Time
 	OptionGroupMemberships           []map[string]interface{}
 	Engine                           string
 	MultiAZ                          bool
-	LatestRestorableTime             time.Time
+	LatestRestorableTime             *time.Time
 	DBSecurityGroups                 []map[string]interface{}
 	DBParameterGroups                []map[string]interface{}
 	DBSubnetGroup                    map[string]interface{}
@@ -182,7 +182,7 @@ type DBSecurityGroupData struct {
 type AutoScalingGroupData struct {
 	AutoScalingGroupName    string
 	AvailabilityZones       []string
-	CreatedTime             time.Time
+	CreatedTime             *time.Time
 	DefaultCooldown         int
 	DesiredCapacity         int
 	HealthCheckGracePeriod  int
@@ -211,7 +211,7 @@ type ELBData struct {
 	DNSName                   string
 	SecurityGroups            []string
 	LoadBalancerName          string
-	CreatedTime               time.Time
+	CreatedTime               *time.Time
 	AvailabilityZones         []string
 	Scheme                    string
 	SourceSecurityGroup       map[string]interface{}

@@ -21,7 +21,7 @@
             "PendingModifiedValues": {}, 
             "Engine": "postgres", 
             "MultiAZ": true, 
-            "LatestRestorableTime": "2015-09-10T22:42:28Z", 
+            "LatestRestorableTime": null, 
             "DBSecurityGroups": [], 
             "DBParameterGroups": [
                 {
@@ -86,7 +86,7 @@
                     "VpcSecurityGroupId": "sg-d39a43b6"
                 }
             ], 
-            "InstanceCreateTime": "2015-01-17T04:33:55.513Z", 
+            "InstanceCreateTime": null, 
             "CopyTagsToSnapshot": false, 
             "OptionGroupMemberships": [
                 {
