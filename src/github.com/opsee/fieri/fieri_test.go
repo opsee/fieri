@@ -10,6 +10,7 @@ import (
 	"github.com/opsee/fieri/consumer"
 	"github.com/opsee/fieri/store"
 	"github.com/stretchr/testify/suite"
+	"github.com/yeller/yeller-golang"
 	"os"
 	"strings"
 	"testing"
@@ -35,6 +36,7 @@ type TestSuite struct {
 }
 
 func (suite *TestSuite) SetupSuite() {
+	yeller.Start("test")
 	t := suite.T()
 
 	suite.Store = setupDb(t)
