@@ -1,0 +1,8 @@
+POSTGRES_CONN=postgres://postgres:postgres@postgresql/fieri_test?sslmode=disable
+LOOKUPD_HOSTS=http://lookupd:4161
+NSQD_HOST=nsqd:4150
+BASTION_DISCOVERY_TOPIC=_.discovery
+FIERI_TOPIC=_.discovery
+FIERI_HTTP_ADDR=:9092
+FIERI_API_ADDR=:9092
+YELLER_KEY=none

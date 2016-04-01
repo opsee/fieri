@@ -8,22 +8,14 @@ dependencies:
   override:
     - docker info
     - docker login -e $DOCKER_EMAIL -u $DOCKER_USERNAME -p $DOCKER_PASSWORD quay.io
-    - go version
-    - docker pull quay.io/opsee/build-go
-    - docker pull sameersbn/postgresql:9.4-3
-    - docker pull nsqio/nsq
-    - docker run --name postgresql -d -e PSQL_TRUST_LOCALNET=true -e DB_USER=postgres -e DB_PASS= -e DB_NAME=fieri_test sameersbn/postgresql:9.4-3
-    - docker run --name lookupd -d nsqio/nsq /nsqlookupd
-    - docker run --name nsqd --link lookupd:lookupd -d nsqio/nsq /nsqd --broadcast-address=nsqd --lookupd-tcp-address=lookupd:4160
-    - sleep 30
 test:
   override:
-    - make docker
-    - docker tag quay.io/opsee/fieri quay.io/opsee/fieri:$CIRCLE_SHA1
+    - REV=${CIRCLE_SHA1} make
     - docker push quay.io/opsee/fieri:$CIRCLE_SHA1
 deployment:
   production:
     branch: master
     owner: opsee
     commands:
+      - docker tag -f quay.io/opsee/fieri:$CIRCLE_SHA1 quay.io/opsee/fieri:latest
       - docker push quay.io/opsee/fieri:latest
