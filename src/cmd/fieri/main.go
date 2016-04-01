@@ -10,7 +10,6 @@ import (
 	"github.com/yeller/yeller-golang"
 	"os"
 	"os/signal"
-	"strconv"
 	"strings"
 )
 
@@ -32,19 +31,13 @@ func main() {
 		log.Fatal("You'll need to give me a nsqlookupd connection(s) by setting the LOOKUPD_HOSTS env var (comma-separated)")
 	}
 
-	concurrency, err := strconv.Atoi(os.Getenv("FIERI_CONCURRENCY"))
-	if err != nil {
-		log.Println("WARNING: FIERI_CONCURRENCY was not set properly, so defaulting to 1")
-		concurrency = 1
-	}
-
 	bastionDiscoveryTopic := os.Getenv("BASTION_DISCOVERY_TOPIC")
 	if bastionDiscoveryTopic == "" {
 		log.Fatal("You have to give me a topic to consume by setting the BASTION_DISCOVERY_TOPIC env var")
 	}
 
 	lookupds := strings.Split(lookupdHosts, ",")
-	nsqConsumer, err := consumer.NewNsq(lookupds, db, concurrency, bastionDiscoveryTopic)
+	nsqConsumer, err := consumer.NewNsq(lookupds, db, bastionDiscoveryTopic)
 	if err != nil {
 		log.Fatal("Error initializing nsq consumer:", err)
 	}

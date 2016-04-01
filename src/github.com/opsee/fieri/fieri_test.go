@@ -176,7 +176,7 @@ func setupDb(t *testing.T) store.Store {
 
 func setupConsumer(suite *TestSuite) {
 	if suite.Consumer == nil {
-		nsq, err := consumer.NewNsq(strings.Split(os.Getenv("LOOKUPD_HOSTS"), ","), suite.Store, 1, testTopic)
+		nsq, err := consumer.NewNsq(strings.Split(os.Getenv("LOOKUPD_HOSTS"), ","), suite.Store, testTopic)
 		if err != nil {
 			suite.T().Fatal(err)
 		}
