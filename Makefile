@@ -1,7 +1,8 @@
-all: fmt build
+APPENV ?= testenv
+PROJECT := $(shell basename $$PWD)
+REV ?= latest
 
-build:
-	gb build
+all: build
 
 clean:
 	rm -fr target bin pkg
@@ -10,46 +11,32 @@ fmt:
 	@gofmt -w ./
 
 deps:
-	docker pull sameersbn/postgresql:9.4-3
-	@docker rm -f postgresql || true
-	@docker run --name postgresql -d -e PSQL_TRUST_LOCALNET=true -e DB_USER=postgres -e DB_PASS= -e DB_NAME=fieri_test sameersbn/postgresql:9.4-3
-	@echo "started postgresql"
-	docker pull nsqio/nsq:latest
-	@docker rm -f lookupd || true
-	docker run --name lookupd -d nsqio/nsq /nsqlookupd
-	@echo "started lookupd"
-	@docker rm -f nsqd || true
-	@docker run --name nsqd --link lookupd:lookupd -d nsqio/nsq /nsqd --broadcast-address=nsqd --lookupd-tcp-address=lookupd:4160
-	@echo "started nsqd"
-
+	docker-compose up -d
+	docker run --link fieri_postgresql:postgres aanand/wait
+	
 migrate:
 	migrate -url $(POSTGRES_CONN) -path ./migrations up
 
-docker: fmt
-	docker run -e POSTGRES_CONN="postgres://postgres@postgresql/fieri_test?sslmode=disable" \
-		--link postgresql:postgresql \
-		--link nsqd:nsqd \
-		--link lookupd:lookupd \
-		-e NSQD_HOST="nsqd:4150" \
-		-e LOOKUPD_HOSTS="http://lookupd:4161" \
+build: deps $(APPENV)
+	docker run \
+	  --env-file ./$(APPENV) \
+		--link fieri_postgresql:postgresql \
+		--link fieri_nsqd:nsqd \
+		--link fieri_lookupd:lookupd \
 		-e "TARGETS=linux/amd64" \
-		-v `pwd`:/build quay.io/opsee/build-go \
-		&& docker build -t quay.io/opsee/fieri .
+		-e PROJECT=github.com/opsee/$(PROJECT) \
+		-v `pwd`:/gopath/src/github.com/opsee/$(PROJECT) \
+		quay.io/opsee/build-go:16
+	docker build -t quay.io/opsee/$(PROJECT):$(REV) .
 
-run: docker
-	docker run -e POSTGRES_CONN="postgres://postgres@postgresql/fieri_test?sslmode=disable" \
-		--link postgresql:postgresql \
-		--link nsqd:nsqd \
-		--link lookupd:lookupd \
-		-e VAPE_ENDPOINT=$(VAPE_ENDPOINT) \
-		-e SLACK_ENDPOINT=$(SLACK_ENDPOINT) \
-		-e NSQD_HOST="nsqd:4150" \
-		-e LOOKUPD_HOSTS="http://lookupd:4161" \
-	  -e BASTION_DISCOVERY_TOPIC="discovery" \
-		-e FIERI_ONBOARDING_TOPIC="onboarding" \
-		-e FIERI_HTTP_ADDR=":9092" \
+run: deps $(APPENV)
+	docker run \
+	  --env-file ./$(APPENV) \
+		--link fieri_postgresql:postgresql \
+		--link fieri_nsqd:nsqd \
+		--link fieri_lookupd:lookupd \
 		-p 9092:9092 \
 		--rm \
-		quay.io/opsee/fieri
+		quay.io/opsee/$(PROJECT):$(REV)
 
-.PHONY: docker run migrate clean all
+.PHONY: build run migrate clean all

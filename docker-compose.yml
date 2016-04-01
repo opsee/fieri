@@ -1,0 +1,30 @@
+nsqlookupd:
+    image: nsqio/nsq:v0.3.5
+    command: /nsqlookupd
+    ports:
+        - 4160:4160
+        - 4161:4161
+    container_name: fieri_lookupd
+
+nsqd:
+    image: nsqio/nsq:v0.3.5
+    command: /nsqd --broadcast-address=nsqd --lookupd-tcp-address=lookupd:4160
+    links:
+        - nsqlookupd:lookupd
+    ports:
+        - 4150:4150
+        - 4151:4151
+    container_name: fieri_nsqd
+
+postgres:
+    image: sameersbn/postgresql:9.4-11
+    ports:
+        - 5439:5432
+        - 5432
+    environment:
+        - PG_TRUST_LOCALNET=true
+        - PG_PASSWORD=postgres
+        - DB_USER=postgres
+        - DB_PASS=postgres
+        - DB_NAME=fieri_test
+    container_name: fieri_postgresql
