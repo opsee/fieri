@@ -18,15 +18,16 @@ type nsqHandler struct {
 	db store.Store
 }
 
-func NewNsq(lookupds []string, db store.Store, concurrency int, topic string) (Consumer, error) {
+func NewNsq(lookupds []string, db store.Store, topic string) (Consumer, error) {
 	config := nsq.NewConfig()
+	config.MaxInFlight = 4
 	consumer, err := nsq.NewConsumer(topic, Channel, config)
 	if err != nil {
 		return nil, err
 	}
 
 	handler := &nsqHandler{db: db}
-	consumer.AddConcurrentHandlers(handler, concurrency)
+	consumer.AddConcurrentHandlers(handler, 4)
 	consumer.ConnectToNSQLookupds(lookupds)
 
 	return &Nsq{consumer: consumer}, nil
