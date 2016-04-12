@@ -29,7 +29,6 @@ type TestSuite struct {
 	SecurityGroups    []*ec2.SecurityGroup
 	LoadBalancers     []*elb.LoadBalancerDescription
 	RdsInstances      []*rds.DBInstance
-	RdsSecurityGroups []*rds.DBSecurityGroup
 	AutoScalingGroups []*autoscaling.Group
 	RouteTables       []*ec2.RouteTable
 	Subnets           []*ec2.Subnet
@@ -45,7 +44,6 @@ func (suite *TestSuite) SetupSuite() {
 	suite.SecurityGroups = loadSecurityGroups(t)
 	suite.LoadBalancers = loadLoadBalancers(t)
 	suite.RdsInstances = loadRdsInstances(t)
-	suite.RdsSecurityGroups = loadRdsSecurityGroups(t)
 	suite.AutoScalingGroups = loadAutoScalingGroups(t)
 	suite.RouteTables = loadRouteTables(t)
 	suite.Subnets = loadSubnets(t)
@@ -116,16 +114,6 @@ func (suite *TestSuite) TestAutoScalingGroups() {
 	time.Sleep(500 * time.Millisecond)
 	groups, _ := suite.Store.ListGroups(&store.GroupsRequest{CustomerId: testCustomerId, Type: "autoscaling"})
 	suite.Equal(len(suite.AutoScalingGroups), len(groups.Groups))
-}
-
-func (suite *TestSuite) TestDbSecurityGroups() {
-	for _, group := range suite.RdsSecurityGroups {
-		publishEvent(suite.Producer, "DBSecurityGroup", group)
-	}
-	setupConsumer(suite)
-	time.Sleep(500 * time.Millisecond)
-	groups, _ := suite.Store.ListGroups(&store.GroupsRequest{CustomerId: testCustomerId, Type: "rds-security"})
-	suite.Equal(len(suite.RdsSecurityGroups), len(groups.Groups))
 }
 
 func (suite *TestSuite) TestRouteTables() {
@@ -200,19 +188,6 @@ func setupProducer(t *testing.T) *nsq.Producer {
 	}
 
 	return producer
-}
-
-func loadRdsSecurityGroups(t *testing.T) []*rds.DBSecurityGroup {
-	var rdsSecurityGroupsJson struct {
-		DBSecurityGroups []*rds.DBSecurityGroup
-	}
-
-	err := readJson("fixtures/db-security-groups.json", &rdsSecurityGroupsJson)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	return rdsSecurityGroupsJson.DBSecurityGroups
 }
 
 func loadRdsInstances(t *testing.T) []*rds.DBInstance {
