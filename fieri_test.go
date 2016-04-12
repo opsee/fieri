@@ -107,7 +107,7 @@ func (suite *TestSuite) TestELBGroups() {
 
 func (suite *TestSuite) TestAutoScalingGroups() {
 	for _, group := range suite.AutoScalingGroups {
-		publishEvent(suite.Producer, "AutoScalingGroup", group)
+		publishEvent(suite.Producer, "Group", group)
 	}
 
 	setupConsumer(suite)
