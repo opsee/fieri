@@ -131,7 +131,7 @@ const (
 	DBInstanceEntityType       = "DBInstance"
 	SecurityGroupEntityType    = "SecurityGroup"
 	DBSecurityGroupEntityType  = "DBSecurityGroup"
-	AutoScalingGroupEntityType = "AutoScalingGroup"
+	AutoScalingGroupEntityType = "Group"
 	ELBEntityType              = "LoadBalancerDescription"
 	RouteTableEntityType       = "RouteTable"
 	SubnetEntityType           = "Subnet"

@@ -56,6 +56,11 @@ func (h *nsqHandler) HandleMessage(m *nsq.Message) error {
 		return nil
 	}
 
+	// skip db security groups which are being sent by bastions erroneously
+	if event.MessageType == store.DBSecurityGroupEntityType {
+		return nil
+	}
+
 	entity, err := store.NewEntity(event.MessageType, event.CustomerId, []byte(event.MessageBody))
 	if err != nil {
 		h.handleError(m, err)
