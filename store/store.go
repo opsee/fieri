@@ -3,6 +3,13 @@ package store
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"github.com/aws/aws-sdk-go/aws"
+	opsee_aws "github.com/opsee/basic/schema/aws"
+	opsee_aws_autoscaling "github.com/opsee/basic/schema/aws/autoscaling"
+	opsee_aws_ec2 "github.com/opsee/basic/schema/aws/ec2"
+	opsee_aws_elb "github.com/opsee/basic/schema/aws/elb"
+	opsee_aws_rds "github.com/opsee/basic/schema/aws/rds"
 	"time"
 )
 
@@ -119,125 +126,6 @@ type Subnet struct {
 	UpdatedAt  time.Time `json:"updated_at" db:"updated_at"`
 }
 
-type InstanceData struct {
-	State            map[string]interface{}
-	Monitoring       map[string]interface{}
-	PublicDnsName    string
-	LaunchTime       *time.Time
-	PublicIpAddress  string
-	PrivateIpAddress string
-	InstanceId       string
-	ImageId          string
-	PrivateDnsName   string
-	KeyName          string
-	SecurityGroups   []map[string]interface{}
-	SubnetId         string
-	InstanceType     string
-	Placement        map[string]interface{}
-	Tags             []map[string]interface{}
-}
-
-type DBInstanceData struct {
-	PubliclyAccessible               bool
-	VpcSecurityGroups                []map[string]interface{}
-	InstanceCreateTime               *time.Time
-	OptionGroupMemberships           []map[string]interface{}
-	Engine                           string
-	MultiAZ                          bool
-	LatestRestorableTime             *time.Time
-	DBSecurityGroups                 []map[string]interface{}
-	DBParameterGroups                []map[string]interface{}
-	DBSubnetGroup                    map[string]interface{}
-	SecondaryAvailabilityZone        string
-	ReadReplicaDBInstanceIdentifiers []string
-	AllocatedStorage                 int
-	DBName                           string
-	Endpoint                         map[string]interface{}
-	DBInstanceStatus                 string
-	EngineVersion                    string
-	AvailabilityZone                 string
-	StorageType                      string
-	DbiResourceId                    string
-	CACertificateIdentifier          string
-	Iops                             int
-	StorageEncrypted                 bool
-	DBInstanceClass                  string
-	DbInstancePort                   int
-	DBInstanceIdentifier             string
-}
-
-type SecurityGroupData struct {
-	Description string
-	GroupName   string
-	GroupId     string
-}
-
-type DBSecurityGroupData struct {
-	OwnerId                    string
-	DBSecurityGroupDescription string
-	DBSecurityGroupName        string
-	EC2SecurityGroups          []map[string]interface{}
-}
-
-type AutoScalingGroupData struct {
-	AutoScalingGroupName    string
-	AvailabilityZones       []string
-	CreatedTime             *time.Time
-	DefaultCooldown         int
-	DesiredCapacity         int
-	HealthCheckGracePeriod  int
-	HealthCheckType         string
-	InstanceId              string
-	Instances               []map[string]interface{}
-	LaunchConfigurationName string
-	LoadBalancerNames       []map[string]interface{}
-	MaxSize                 int
-	MinSize                 int
-	Name                    string
-	Status                  string
-	Tags                    []map[string]interface{}
-	VPCZoneIdentifier       string
-	TerminationPolicies     []string
-}
-
-type ELBData struct {
-	Subnets                   []string
-	CanonicalHostedZoneNameID string
-	CanonicalHostedZoneName   string
-	ListenerDescriptions      []map[string]interface{}
-	HealthCheck               map[string]interface{}
-	VPCId                     string
-	Instances                 []map[string]interface{}
-	DNSName                   string
-	SecurityGroups            []string
-	LoadBalancerName          string
-	CreatedTime               *time.Time
-	AvailabilityZones         []string
-	Scheme                    string
-	SourceSecurityGroup       map[string]interface{}
-}
-
-type RouteTableData struct {
-	Associations    []map[string]interface{}
-	RouteTableId    string
-	VpcId           string
-	Tags            []map[string]interface{}
-	Routes          []map[string]interface{}
-	PropagatingVgws []map[string]interface{}
-}
-
-type SubnetData struct {
-	VpcId                   string
-	Tags                    []map[string]interface{}
-	CidrBlock               string
-	MapPublicIpOnLaunch     bool
-	DefaultForAz            bool
-	State                   string
-	AvailabilityZone        string
-	SubnetId                string
-	AvailableIpAddressCount int
-}
-
 const (
 	InstanceEntityType         = "Instance"
 	DBInstanceEntityType       = "DBInstance"
@@ -274,253 +162,246 @@ func NewEntity(entityType, customerId string, blob []byte) (interface{}, error) 
 
 	switch entityType {
 	case InstanceEntityType:
-		instanceData := &InstanceData{}
+		instanceData := &opsee_aws_ec2.Instance{}
 		if err = json.Unmarshal(blob, instanceData); err != nil {
 			break
 		}
-		if instanceData.InstanceId == "" {
+		if instanceData.InstanceId == nil {
 			err = ErrMissingInstanceId
 			break
 		}
-		entity = NewInstance(customerId, instanceData)
+		entity, err = NewInstance(customerId, instanceData)
 
 	case DBInstanceEntityType:
-		dbInstanceData := &DBInstanceData{}
+		dbInstanceData := &opsee_aws_rds.DBInstance{}
 		if err = json.Unmarshal(blob, dbInstanceData); err != nil {
 			break
 		}
-		if dbInstanceData.DBInstanceIdentifier == "" {
+		if dbInstanceData.DBInstanceIdentifier == nil {
 			err = ErrMissingInstanceId
 			break
 		}
-		entity = NewInstance(customerId, dbInstanceData)
+		entity, err = NewInstance(customerId, dbInstanceData)
 
 	case SecurityGroupEntityType:
-		secGroupData := &SecurityGroupData{}
+		secGroupData := &opsee_aws_ec2.SecurityGroup{}
 		if err = json.Unmarshal(blob, secGroupData); err != nil {
 			break
 		}
-		if secGroupData.GroupId == "" {
+		if secGroupData.GroupId == nil {
 			err = ErrMissingGroupId
 			break
 		}
-		entity = NewGroup(customerId, secGroupData)
-
-	case DBSecurityGroupEntityType:
-		dbSecGroupData := &DBSecurityGroupData{}
-		if err = json.Unmarshal(blob, dbSecGroupData); err != nil {
-			break
-		}
-		if dbSecGroupData.DBSecurityGroupName == "" {
-			err = ErrMissingGroupId
-			break
-		}
-		entity = NewGroup(customerId, dbSecGroupData)
+		entity, err = NewGroup(customerId, secGroupData)
 
 	case ELBEntityType:
-		elbData := &ELBData{}
+		elbData := &opsee_aws_elb.LoadBalancerDescription{}
 		if err = json.Unmarshal(blob, elbData); err != nil {
 			break
 		}
-		if elbData.LoadBalancerName == "" {
+		if elbData.LoadBalancerName == nil {
 			err = ErrMissingGroupId
 			break
 		}
-		entity = NewGroup(customerId, elbData)
+		entity, err = NewGroup(customerId, elbData)
 
 	case AutoScalingGroupEntityType:
-		autoscalingData := &AutoScalingGroupData{}
+		autoscalingData := &opsee_aws_autoscaling.Group{}
 		if err = json.Unmarshal(blob, autoscalingData); err != nil {
 			break
 		}
 
-		if autoscalingData.AutoScalingGroupName == "" {
+		if autoscalingData.AutoScalingGroupName == nil {
 			err = ErrMissingGroupId
 			break
 		}
-		entity = NewGroup(customerId, autoscalingData)
+		entity, err = NewGroup(customerId, autoscalingData)
 
 	case RouteTableEntityType:
-		routeTableData := &RouteTableData{}
+		routeTableData := &opsee_aws_ec2.RouteTable{}
 		if err = json.Unmarshal(blob, routeTableData); err != nil {
 			break
 		}
 
-		if routeTableData.RouteTableId == "" {
+		if routeTableData.RouteTableId == nil {
 			err = ErrMissingRouteTableId
 			break
 		}
-		entity = NewRouteTable(customerId, routeTableData)
+		entity, err = NewRouteTable(customerId, routeTableData)
 
 	case SubnetEntityType:
-		subnetData := &SubnetData{}
+		subnetData := &opsee_aws_ec2.Subnet{}
 		if err = json.Unmarshal(blob, subnetData); err != nil {
 			break
 		}
 
-		if subnetData.SubnetId == "" {
+		if subnetData.SubnetId == nil {
 			err = ErrMissingSubnetId
 			break
 		}
-		entity = NewSubnet(customerId, subnetData)
+		entity, err = NewSubnet(customerId, subnetData)
 	}
 
 	return entity, err
 }
 
-func NewInstance(customerId string, instanceData interface{}) *Instance {
+func NewInstance(customerId string, instanceData interface{}) (*Instance, error) {
 	var (
 		instance *Instance
 		groups   []*Group
 		jsonD    []byte
+		err      error
 	)
 
-	switch instanceData.(type) {
-	case *InstanceData:
-		iData := instanceData.(*InstanceData)
+	switch t := instanceData.(type) {
+	case *opsee_aws_ec2.Instance:
+		iData := instanceData.(*opsee_aws_ec2.Instance)
 		groups = make([]*Group, len(iData.SecurityGroups))
 
 		for i, group := range iData.SecurityGroups {
-			gd := &SecurityGroupData{}
-			if name, ok := group["GroupName"].(string); ok {
-				gd.GroupName = name
+			gr := &opsee_aws_ec2.SecurityGroup{}
+			opsee_aws.CopyInto(gr, group)
+			groups[i], err = NewGroup(customerId, gr)
+			if err != nil {
+				return nil, err
 			}
-			if id, ok := group["GroupId"].(string); ok {
-				gd.GroupId = id
-			}
-			groups[i] = NewGroup(customerId, gd)
 		}
 
-		jsonD, _ = json.Marshal(iData)
+		jsonD, err = json.Marshal(iData)
 		instance = &Instance{
-			Id:         iData.InstanceId,
+			Id:         aws.StringValue(iData.InstanceId),
 			CustomerId: customerId,
 			Type:       InstanceStoreType,
 			Groups:     groups,
 			Data:       jsonD,
 		}
 
-	case *DBInstanceData:
-		dbiData := instanceData.(*DBInstanceData)
-		dbSecLen := len(dbiData.DBSecurityGroups)
-		groups = make([]*Group, dbSecLen+len(dbiData.VpcSecurityGroups))
-
-		for i, group := range dbiData.DBSecurityGroups {
-			sg := &DBSecurityGroupData{}
-			if name, ok := group["DBSecurityGroupName"].(string); ok {
-				sg.DBSecurityGroupName = name
-			}
-			groups[i] = NewGroup(customerId, sg)
-		}
+	case *opsee_aws_rds.DBInstance:
+		dbiData := instanceData.(*opsee_aws_rds.DBInstance)
+		groups = make([]*Group, len(dbiData.VpcSecurityGroups))
 
 		for i, group := range dbiData.VpcSecurityGroups {
-			sg := &SecurityGroupData{}
-			if id, ok := group["VpcSecurityGroupId"].(string); ok {
-				sg.GroupId = id
+			gr := &opsee_aws_ec2.SecurityGroup{}
+			opsee_aws.CopyInto(gr, group)
+			groups[i], err = NewGroup(customerId, gr)
+			if err != nil {
+				return nil, err
 			}
-			groups[i+dbSecLen] = NewGroup(customerId, sg)
 		}
 
-		jsonD, _ = json.Marshal(dbiData)
+		jsonD, err = json.Marshal(dbiData)
 		instance = &Instance{
-			Id:         dbiData.DBInstanceIdentifier,
+			Id:         aws.StringValue(dbiData.DBInstanceIdentifier),
 			CustomerId: customerId,
 			Type:       DBInstanceStoreType,
 			Groups:     groups,
 			Data:       jsonD,
 		}
+	default:
+		err = fmt.Errorf("unsupported instance type: %#v", t)
 	}
 
-	return instance
+	if err != nil {
+		return nil, err
+	}
+
+	return instance, nil
 }
 
-func NewGroup(customerId string, groupData interface{}) *Group {
+func NewGroup(customerId string, groupData interface{}) (*Group, error) {
 	var (
 		group *Group
 		jsonD []byte
+		err   error
 	)
 
-	switch groupData.(type) {
-	case *SecurityGroupData:
-		sg := groupData.(*SecurityGroupData)
-		jsonD, _ = json.Marshal(sg)
+	switch t := groupData.(type) {
+	case *opsee_aws_ec2.SecurityGroup:
+		sg := groupData.(*opsee_aws_ec2.SecurityGroup)
+		jsonD, err = json.Marshal(sg)
 		group = &Group{
 			CustomerId: customerId,
-			Name:       sg.GroupId,
+			Name:       aws.StringValue(sg.GroupId),
 			Type:       SecurityGroupStoreType,
 			Data:       jsonD,
 		}
 
-	case *DBSecurityGroupData:
-		dbsg := groupData.(*DBSecurityGroupData)
-		jsonD, _ = json.Marshal(dbsg)
-		group = &Group{
-			CustomerId: customerId,
-			Name:       dbsg.DBSecurityGroupName,
-			Type:       DBSecurityGroupStoreType,
-			Data:       jsonD,
-		}
-
-	case *ELBData:
-		elb := groupData.(*ELBData)
+	case *opsee_aws_elb.LoadBalancerDescription:
+		elb := groupData.(*opsee_aws_elb.LoadBalancerDescription)
 		instances := make([]*Instance, len(elb.Instances))
 		for i, instance := range elb.Instances {
-			dat := &InstanceData{}
-			if id, ok := instance["InstanceId"].(string); ok {
-				dat.InstanceId = id
+			inst := &opsee_aws_ec2.Instance{}
+			opsee_aws.CopyInto(inst, instance)
+			instances[i], err = NewInstance(customerId, inst)
+			if err != nil {
+				return nil, err
 			}
-			instances[i] = NewInstance(customerId, dat)
 		}
-		jsonD, _ = json.Marshal(elb)
+		jsonD, err = json.Marshal(elb)
 		group = &Group{
 			CustomerId: customerId,
-			Name:       elb.LoadBalancerName,
+			Name:       aws.StringValue(elb.LoadBalancerName),
 			Type:       ELBStoreType,
 			Data:       jsonD,
 			Instances:  instances,
 		}
 
-	case *AutoScalingGroupData:
-		autoscaling := groupData.(*AutoScalingGroupData)
+	case *opsee_aws_autoscaling.Group:
+		autoscaling := groupData.(*opsee_aws_autoscaling.Group)
 		instances := make([]*Instance, len(autoscaling.Instances))
 		for i, instance := range autoscaling.Instances {
-			dat := &InstanceData{}
-			if id, ok := instance["InstanceId"].(string); ok {
-				dat.InstanceId = id
+			inst := &opsee_aws_ec2.Instance{}
+			opsee_aws.CopyInto(inst, instance)
+			instances[i], err = NewInstance(customerId, inst)
+			if err != nil {
+				return nil, err
 			}
-			instances[i] = NewInstance(customerId, dat)
 		}
-		jsonD, _ = json.Marshal(autoscaling)
+		jsonD, err = json.Marshal(autoscaling)
 		group = &Group{
 			CustomerId: customerId,
-			Name:       autoscaling.AutoScalingGroupName,
+			Name:       aws.StringValue(autoscaling.AutoScalingGroupName),
 			Type:       AutoScalingGroupStoreType,
 			Data:       jsonD,
 			Instances:  instances,
 		}
-
+	default:
+		err = fmt.Errorf("unsupported group type: %#v", t)
 	}
-	return group
+
+	if err != nil {
+		return nil, err
+	}
+
+	return group, nil
 }
 
-func NewRouteTable(customerId string, routeTableData *RouteTableData) *RouteTable {
-	jsonD, _ := json.Marshal(routeTableData)
+func NewRouteTable(customerId string, routeTableData *opsee_aws_ec2.RouteTable) (*RouteTable, error) {
+	jsonD, err := json.Marshal(routeTableData)
+
+	if err != nil {
+		return nil, err
+	}
 
 	return &RouteTable{
-		Id:         routeTableData.RouteTableId,
+		Id:         aws.StringValue(routeTableData.RouteTableId),
 		CustomerId: customerId,
 		Data:       jsonD,
-	}
+	}, nil
 }
 
-func NewSubnet(customerId string, subnetData *SubnetData) *Subnet {
-	jsonD, _ := json.Marshal(subnetData)
+func NewSubnet(customerId string, subnetData *opsee_aws_ec2.Subnet) (*Subnet, error) {
+	jsonD, err := json.Marshal(subnetData)
+
+	if err != nil {
+		return nil, err
+	}
 
 	return &Subnet{
-		Id:         subnetData.SubnetId,
+		Id:         aws.StringValue(subnetData.SubnetId),
 		CustomerId: customerId,
 		Data:       jsonD,
-	}
+	}, nil
 }
 
 func (i *Instance) MarshalJSON() ([]byte, error) {

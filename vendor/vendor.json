@@ -141,6 +141,84 @@
 			"revisionTime": "2015-11-24T14:24:05-05:00"
 		},
 		{
+			"checksumSHA1": "v9pieYA9Vz3i9vYouWGnl56tmIM=",
+			"path": "github.com/gogo/protobuf/gogoproto",
+			"revision": "5b7453b208470fdb0141985c2cfdcf1471686693",
+			"revisionTime": "2016-03-29T21:29:56+02:00"
+		},
+		{
+			"checksumSHA1": "xbOAEvmFFVsFGu6BTv1UvKb5VD8=",
+			"path": "github.com/gogo/protobuf/proto",
+			"revision": "5b7453b208470fdb0141985c2cfdcf1471686693",
+			"revisionTime": "2016-03-29T21:29:56+02:00"
+		},
+		{
+			"checksumSHA1": "ZKQoQv34ig6y/isleD9JJVt69X8=",
+			"path": "github.com/gogo/protobuf/protoc-gen-gogo/descriptor",
+			"revision": "5b7453b208470fdb0141985c2cfdcf1471686693",
+			"revisionTime": "2016-03-29T21:29:56+02:00"
+		},
+		{
+			"checksumSHA1": "ftnii31JY1Sbvq+qLECUUObVPvM=",
+			"path": "github.com/graphql-go/graphql",
+			"revision": "909ca9f800e7ab67307b4f9f1d56394346acb33c",
+			"revisionTime": "2016-03-18T15:58:50+08:00"
+		},
+		{
+			"checksumSHA1": "aX0asXhgyOKzCd9Gqp+h998xFGg=",
+			"path": "github.com/graphql-go/graphql/gqlerrors",
+			"revision": "909ca9f800e7ab67307b4f9f1d56394346acb33c",
+			"revisionTime": "2016-03-18T15:58:50+08:00"
+		},
+		{
+			"checksumSHA1": "aB9vx/Lo7Dws+MVtf85iB9ocMOI=",
+			"path": "github.com/graphql-go/graphql/language/ast",
+			"revision": "909ca9f800e7ab67307b4f9f1d56394346acb33c",
+			"revisionTime": "2016-03-18T15:58:50+08:00"
+		},
+		{
+			"checksumSHA1": "P+LfyuvYUpoTTeBirloKM7/MeSg=",
+			"path": "github.com/graphql-go/graphql/language/kinds",
+			"revision": "909ca9f800e7ab67307b4f9f1d56394346acb33c",
+			"revisionTime": "2016-03-18T15:58:50+08:00"
+		},
+		{
+			"checksumSHA1": "sKKWECBHmhNynFIpOFJR/Q/4Gy8=",
+			"path": "github.com/graphql-go/graphql/language/lexer",
+			"revision": "909ca9f800e7ab67307b4f9f1d56394346acb33c",
+			"revisionTime": "2016-03-18T15:58:50+08:00"
+		},
+		{
+			"checksumSHA1": "U7nRNcNjHkeOBs3SmLbSZZIbtOE=",
+			"path": "github.com/graphql-go/graphql/language/location",
+			"revision": "909ca9f800e7ab67307b4f9f1d56394346acb33c",
+			"revisionTime": "2016-03-18T15:58:50+08:00"
+		},
+		{
+			"checksumSHA1": "/RxRi3maF72tV2Bqrcwgv/bsy4k=",
+			"path": "github.com/graphql-go/graphql/language/parser",
+			"revision": "909ca9f800e7ab67307b4f9f1d56394346acb33c",
+			"revisionTime": "2016-03-18T15:58:50+08:00"
+		},
+		{
+			"checksumSHA1": "jrfGEXCfqz7/ypi1crmhdyC16QQ=",
+			"path": "github.com/graphql-go/graphql/language/printer",
+			"revision": "909ca9f800e7ab67307b4f9f1d56394346acb33c",
+			"revisionTime": "2016-03-18T15:58:50+08:00"
+		},
+		{
+			"checksumSHA1": "l573EEYY28hrbjM8yJOY1BAKCNE=",
+			"path": "github.com/graphql-go/graphql/language/source",
+			"revision": "909ca9f800e7ab67307b4f9f1d56394346acb33c",
+			"revisionTime": "2016-03-18T15:58:50+08:00"
+		},
+		{
+			"checksumSHA1": "XdbaPA0GmDwkGW6IepvL/pvMrXE=",
+			"path": "github.com/graphql-go/graphql/language/visitor",
+			"revision": "909ca9f800e7ab67307b4f9f1d56394346acb33c",
+			"revisionTime": "2016-03-18T15:58:50+08:00"
+		},
+		{
 			"checksumSHA1": "9dPHJ2IqSJok9bKZ6btWALYE/pA=",
 			"path": "github.com/jmespath/go-jmespath",
 			"revision": "3433f3ea46d9f8019119e7dd41274e112a2359a9",
@@ -193,6 +271,55 @@
 			"path": "github.com/nsqio/go-nsq",
 			"revision": "0b80d6f05e15ca1930e0c5e1d540ed627e299980",
 			"revisionTime": "2016-02-21T09:07:15-08:00"
+		},
+		{
+			"checksumSHA1": "3LAyRqNAa7lCtoEiDFFktCsM/d0=",
+			"path": "github.com/opsee/basic/schema/aws",
+			"revision": "42264b30eb8b46763ddf9517de532b95b1cfe236",
+			"revisionTime": "2016-04-06T15:47:21-07:00"
+		},
+		{
+			"checksumSHA1": "FkjxadUmA3jQE9gNzDheJ5axvyw=",
+			"path": "github.com/opsee/basic/schema/aws/autoscaling",
+			"revision": "42264b30eb8b46763ddf9517de532b95b1cfe236",
+			"revisionTime": "2016-04-06T15:47:21-07:00"
+		},
+		{
+			"checksumSHA1": "srjU1ESiQMdYhe8RsQeIaEAF27k=",
+			"path": "github.com/opsee/basic/schema/aws/ec2",
+			"revision": "42264b30eb8b46763ddf9517de532b95b1cfe236",
+			"revisionTime": "2016-04-06T15:47:21-07:00"
+		},
+		{
+			"checksumSHA1": "9JoTo+10PvSF5YcdZahA35SnCUk=",
+			"path": "github.com/opsee/basic/schema/aws/elb",
+			"revision": "42264b30eb8b46763ddf9517de532b95b1cfe236",
+			"revisionTime": "2016-04-06T15:47:21-07:00"
+		},
+		{
+			"checksumSHA1": "lfQKxPHPkM/+3PDuhT4NnVGKUgM=",
+			"path": "github.com/opsee/basic/schema/aws/rds",
+			"revision": "42264b30eb8b46763ddf9517de532b95b1cfe236",
+			"revisionTime": "2016-04-06T15:47:21-07:00"
+		},
+		{
+			"checksumSHA1": "AdAlxYpERfxuIqtd5eQ0LumzbrE=",
+			"path": "github.com/opsee/protobuf/opseeproto",
+			"revision": "eff6f0d6780e255300d0ef9c30b5483c3c393d4c",
+			"revisionTime": "2016-04-06T14:05:21-07:00"
+		},
+		{
+			"checksumSHA1": "j4+nTMeGp5L9l4uGxASrtjpk3LE=",
+			"origin": "github.com/opsee/fieri/vendor/github.com/opsee/protobuf/opseeproto/types",
+			"path": "github.com/opsee/protobuf/opseeproto/types",
+			"revision": "7070527780b28bc3a31aa650fc665f3db7d54324",
+			"revisionTime": "2016-04-11T16:09:42-07:00"
+		},
+		{
+			"checksumSHA1": "rQxhim+qKPhL/WBNMI/0kdBP30A=",
+			"path": "github.com/opsee/protobuf/plugin/graphql/scalars",
+			"revision": "eff6f0d6780e255300d0ef9c30b5483c3c393d4c",
+			"revisionTime": "2016-04-06T14:05:21-07:00"
 		},
 		{
 			"checksumSHA1": "LuFv4/jlrmFNnDb/5SCSEPAM9vU=",
