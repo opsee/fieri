@@ -166,19 +166,11 @@ func NewEntity(entityType, customerId string, blob []byte) (interface{}, error) 
 		if err = json.Unmarshal(blob, instanceData); err != nil {
 			break
 		}
-		if instanceData.InstanceId == nil {
-			err = ErrMissingInstanceId
-			break
-		}
 		entity, err = NewInstance(customerId, instanceData)
 
 	case DBInstanceEntityType:
 		dbInstanceData := &opsee_aws_rds.DBInstance{}
 		if err = json.Unmarshal(blob, dbInstanceData); err != nil {
-			break
-		}
-		if dbInstanceData.DBInstanceIdentifier == nil {
-			err = ErrMissingInstanceId
 			break
 		}
 		entity, err = NewInstance(customerId, dbInstanceData)
@@ -188,19 +180,11 @@ func NewEntity(entityType, customerId string, blob []byte) (interface{}, error) 
 		if err = json.Unmarshal(blob, secGroupData); err != nil {
 			break
 		}
-		if secGroupData.GroupId == nil {
-			err = ErrMissingGroupId
-			break
-		}
 		entity, err = NewGroup(customerId, secGroupData)
 
 	case ELBEntityType:
 		elbData := &opsee_aws_elb.LoadBalancerDescription{}
 		if err = json.Unmarshal(blob, elbData); err != nil {
-			break
-		}
-		if elbData.LoadBalancerName == nil {
-			err = ErrMissingGroupId
 			break
 		}
 		entity, err = NewGroup(customerId, elbData)
@@ -210,11 +194,6 @@ func NewEntity(entityType, customerId string, blob []byte) (interface{}, error) 
 		if err = json.Unmarshal(blob, autoscalingData); err != nil {
 			break
 		}
-
-		if autoscalingData.AutoScalingGroupName == nil {
-			err = ErrMissingGroupId
-			break
-		}
 		entity, err = NewGroup(customerId, autoscalingData)
 
 	case RouteTableEntityType:
@@ -222,21 +201,11 @@ func NewEntity(entityType, customerId string, blob []byte) (interface{}, error) 
 		if err = json.Unmarshal(blob, routeTableData); err != nil {
 			break
 		}
-
-		if routeTableData.RouteTableId == nil {
-			err = ErrMissingRouteTableId
-			break
-		}
 		entity, err = NewRouteTable(customerId, routeTableData)
 
 	case SubnetEntityType:
 		subnetData := &opsee_aws_ec2.Subnet{}
 		if err = json.Unmarshal(blob, subnetData); err != nil {
-			break
-		}
-
-		if subnetData.SubnetId == nil {
-			err = ErrMissingSubnetId
 			break
 		}
 		entity, err = NewSubnet(customerId, subnetData)
@@ -255,21 +224,26 @@ func NewInstance(customerId string, instanceData interface{}) (*Instance, error)
 
 	switch t := instanceData.(type) {
 	case *opsee_aws_ec2.Instance:
-		iData := instanceData.(*opsee_aws_ec2.Instance)
-		groups = make([]*Group, len(iData.SecurityGroups))
-
-		for i, group := range iData.SecurityGroups {
-			gr := &opsee_aws_ec2.SecurityGroup{}
-			opsee_aws.CopyInto(gr, group)
-			groups[i], err = NewGroup(customerId, gr)
-			if err != nil {
-				return nil, err
-			}
+		if t.InstanceId == nil {
+			return nil, ErrMissingInstanceId
 		}
 
-		jsonD, err = json.Marshal(iData)
+		groups = make([]*Group, 0, len(t.SecurityGroups))
+
+		for _, group := range t.SecurityGroups {
+			gr := &opsee_aws_ec2.SecurityGroup{}
+			opsee_aws.CopyInto(gr, group)
+
+			g, err := NewGroup(customerId, gr)
+			if err != nil {
+				continue
+			}
+			groups = append(groups, g)
+		}
+
+		jsonD, err = json.Marshal(t)
 		instance = &Instance{
-			Id:         aws.StringValue(iData.InstanceId),
+			Id:         aws.StringValue(t.InstanceId),
 			CustomerId: customerId,
 			Type:       InstanceStoreType,
 			Groups:     groups,
@@ -277,21 +251,27 @@ func NewInstance(customerId string, instanceData interface{}) (*Instance, error)
 		}
 
 	case *opsee_aws_rds.DBInstance:
-		dbiData := instanceData.(*opsee_aws_rds.DBInstance)
-		groups = make([]*Group, len(dbiData.VpcSecurityGroups))
-
-		for i, group := range dbiData.VpcSecurityGroups {
-			gr := &opsee_aws_ec2.SecurityGroup{}
-			opsee_aws.CopyInto(gr, group)
-			groups[i], err = NewGroup(customerId, gr)
-			if err != nil {
-				return nil, err
-			}
+		if t.DBInstanceIdentifier == nil {
+			return nil, ErrMissingInstanceId
 		}
 
-		jsonD, err = json.Marshal(dbiData)
+		groups = make([]*Group, 0, len(t.VpcSecurityGroups))
+
+		for _, group := range t.VpcSecurityGroups {
+			gr := &opsee_aws_ec2.SecurityGroup{}
+			opsee_aws.CopyInto(gr, group)
+
+			g, err := NewGroup(customerId, gr)
+			if err != nil {
+				continue
+			}
+
+			groups = append(groups, g)
+		}
+
+		jsonD, err = json.Marshal(t)
 		instance = &Instance{
-			Id:         aws.StringValue(dbiData.DBInstanceIdentifier),
+			Id:         aws.StringValue(t.DBInstanceIdentifier),
 			CustomerId: customerId,
 			Type:       DBInstanceStoreType,
 			Groups:     groups,
@@ -317,50 +297,67 @@ func NewGroup(customerId string, groupData interface{}) (*Group, error) {
 
 	switch t := groupData.(type) {
 	case *opsee_aws_ec2.SecurityGroup:
-		sg := groupData.(*opsee_aws_ec2.SecurityGroup)
-		jsonD, err = json.Marshal(sg)
+		if t.GroupId == nil {
+			return nil, ErrMissingGroupId
+		}
+
+		jsonD, err = json.Marshal(t)
 		group = &Group{
 			CustomerId: customerId,
-			Name:       aws.StringValue(sg.GroupId),
+			Name:       aws.StringValue(t.GroupId),
 			Type:       SecurityGroupStoreType,
 			Data:       jsonD,
 		}
 
 	case *opsee_aws_elb.LoadBalancerDescription:
-		elb := groupData.(*opsee_aws_elb.LoadBalancerDescription)
-		instances := make([]*Instance, len(elb.Instances))
-		for i, instance := range elb.Instances {
+		if t.LoadBalancerName == nil {
+			return nil, ErrMissingGroupId
+		}
+
+		instances := make([]*Instance, 0, len(t.Instances))
+		for _, instance := range t.Instances {
 			inst := &opsee_aws_ec2.Instance{}
 			opsee_aws.CopyInto(inst, instance)
-			instances[i], err = NewInstance(customerId, inst)
+
+			ii, err := NewInstance(customerId, inst)
 			if err != nil {
-				return nil, err
+				continue
 			}
+
+			instances = append(instances, ii)
 		}
-		jsonD, err = json.Marshal(elb)
+
+		jsonD, err = json.Marshal(t)
 		group = &Group{
 			CustomerId: customerId,
-			Name:       aws.StringValue(elb.LoadBalancerName),
+			Name:       aws.StringValue(t.LoadBalancerName),
 			Type:       ELBStoreType,
 			Data:       jsonD,
 			Instances:  instances,
 		}
 
 	case *opsee_aws_autoscaling.Group:
-		autoscaling := groupData.(*opsee_aws_autoscaling.Group)
-		instances := make([]*Instance, len(autoscaling.Instances))
-		for i, instance := range autoscaling.Instances {
+		if t.AutoScalingGroupName == nil {
+			return nil, ErrMissingGroupId
+		}
+
+		instances := make([]*Instance, 0, len(t.Instances))
+		for _, instance := range t.Instances {
 			inst := &opsee_aws_ec2.Instance{}
 			opsee_aws.CopyInto(inst, instance)
-			instances[i], err = NewInstance(customerId, inst)
+
+			ii, err := NewInstance(customerId, inst)
 			if err != nil {
-				return nil, err
+				continue
 			}
+
+			instances = append(instances, ii)
 		}
-		jsonD, err = json.Marshal(autoscaling)
+
+		jsonD, err = json.Marshal(t)
 		group = &Group{
 			CustomerId: customerId,
-			Name:       aws.StringValue(autoscaling.AutoScalingGroupName),
+			Name:       aws.StringValue(t.AutoScalingGroupName),
 			Type:       AutoScalingGroupStoreType,
 			Data:       jsonD,
 			Instances:  instances,
