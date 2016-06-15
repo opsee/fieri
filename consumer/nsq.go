@@ -49,6 +49,8 @@ func (c *Nsq) Stop() error {
 }
 
 func (h *nsqHandler) HandleMessage(m *nsq.Message) error {
+	return nil
+
 	event := &Event{}
 	err := json.Unmarshal(m.Body, event)
 	if err != nil {
